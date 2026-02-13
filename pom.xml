@@ -1,0 +1,120 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>ch.so.agi.ilivalidator</groupId>
+  <artifactId>hop-ilivalidator-plugin</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>Hop INTERLIS Validator Plugin</name>
+  <description>Apache Hop 2.17 plugin (Action + Transform) for INTERLIS validation</description>
+
+  <modules>
+    <module>ilivalidator-core</module>
+    <module>hop-action-ilivalidator</module>
+    <module>hop-transform-ilivalidator</module>
+    <module>assemblies</module>
+  </modules>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>17</maven.compiler.release>
+    <hop.version>2.17.0</hop.version>
+    <ilivalidator.version>1.15.0</ilivalidator.version>
+    <jandex.version>3.2.2</jandex.version>
+    <junit.jupiter.version>5.11.4</junit.jupiter.version>
+  </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.apache.hop</groupId>
+        <artifactId>hop-core</artifactId>
+        <version>${hop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hop</groupId>
+        <artifactId>hop-engine</artifactId>
+        <version>${hop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.hop</groupId>
+        <artifactId>hop-ui</artifactId>
+        <version>${hop.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>ch.interlis</groupId>
+        <artifactId>ilivalidator</artifactId>
+        <version>${ilivalidator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${junit.jupiter.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
+  <repositories>
+    <repository>
+      <id>central</id>
+      <name>Maven Central</name>
+      <url>https://repo1.maven.org/maven2/</url>
+    </repository>
+    <repository>
+      <id>jars-interlis</id>
+      <name>jars.interlis.ch</name>
+      <url>https://jars.interlis.ch/</url>
+    </repository>
+  </repositories>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+          <configuration>
+            <release>${maven.compiler.release}</release>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-jar-plugin</artifactId>
+          <version>3.3.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.2</version>
+          <configuration>
+            <useModulePath>false</useModulePath>
+          </configuration>
+        </plugin>
+        <plugin>
+          <groupId>io.smallrye</groupId>
+          <artifactId>jandex-maven-plugin</artifactId>
+          <version>${jandex.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <version>3.7.1</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-shade-plugin</artifactId>
+          <version>3.5.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-antrun-plugin</artifactId>
+          <version>3.1.0</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+</project>

@@ -1,0 +1,49 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>ch.so.agi.ilivalidator</groupId>
+    <artifactId>hop-ilivalidator-plugin</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>ilivalidator-core</artifactId>
+  <name>INTERLIS Validator Core</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>ch.interlis</groupId>
+      <artifactId>ilivalidator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>ch.ehi</groupId>
+      <artifactId>ehibasics</artifactId>
+      <version>1.4.1</version>
+    </dependency>
+    <dependency>
+      <groupId>ch.interlis</groupId>
+      <artifactId>iox-api</artifactId>
+      <version>1.0.4</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

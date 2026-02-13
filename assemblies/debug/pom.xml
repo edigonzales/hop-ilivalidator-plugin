@@ -1,0 +1,92 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>ch.so.agi.ilivalidator</groupId>
+    <artifactId>assemblies</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>debug</artifactId>
+  <packaging>pom</packaging>
+  <name>Debug Hop Layout</name>
+
+  <properties>
+    <hop.client.url>https://archive.apache.org/dist/hop/${hop.version}/apache-hop-client-${hop.version}.zip</hop.client.url>
+    <hop.client.zip>${project.build.directory}/apache-hop-client-${hop.version}.zip</hop.client.zip>
+    <action.zip>${project.basedir}/../assemblies-action-ilivalidator/target/assemblies-action-ilivalidator-${project.version}.zip</action.zip>
+    <transform.zip>${project.basedir}/../assemblies-transform-ilivalidator/target/assemblies-transform-ilivalidator-${project.version}.zip</transform.zip>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>ch.so.agi.ilivalidator</groupId>
+      <artifactId>assemblies-action-ilivalidator</artifactId>
+      <version>${project.version}</version>
+      <type>pom</type>
+    </dependency>
+    <dependency>
+      <groupId>ch.so.agi.ilivalidator</groupId>
+      <artifactId>assemblies-transform-ilivalidator</artifactId>
+      <version>${project.version}</version>
+      <type>pom</type>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>prepare-debug-layout</id>
+            <phase>package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <delete dir="${project.build.directory}/hop"/>
+                <delete dir="${project.build.directory}/${hop.extracted.dir}"/>
+                <mkdir dir="${project.build.directory}"/>
+
+                <echo message="Downloading Hop client from ${hop.client.url}"/>
+                <get src="${hop.client.url}" dest="${hop.client.zip}" skipexisting="true"/>
+
+                <echo message="Extracting Hop client ZIP"/>
+                <unzip src="${hop.client.zip}" dest="${project.build.directory}"/>
+
+                <echo message="Overlaying plugin assemblies"/>
+                <unzip src="${action.zip}" dest="${project.build.directory}/hop"/>
+                <unzip src="${transform.zip}" dest="${project.build.directory}/hop"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>package-debug-zip</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <configuration>
+              <descriptors>
+                <descriptor>src/assembly/assembly.xml</descriptor>
+              </descriptors>
+              <appendAssemblyId>false</appendAssemblyId>
+              <finalName>${project.artifactId}-${project.version}</finalName>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
