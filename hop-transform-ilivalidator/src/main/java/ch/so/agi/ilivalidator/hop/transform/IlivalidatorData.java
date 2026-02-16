@@ -13,6 +13,7 @@ public class IlivalidatorData extends BaseTransformData implements ITransformDat
 
   int outputIsValidIndex = -1;
   int outputValidationMessageIndex = -1;
+  int outputLogFilePathIndex = -1;
 
   IlivalidatorOptions options;
   IlivalidatorResult cachedStaticResult;

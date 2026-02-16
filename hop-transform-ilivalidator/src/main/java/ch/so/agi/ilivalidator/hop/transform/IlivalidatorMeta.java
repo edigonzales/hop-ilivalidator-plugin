@@ -40,6 +40,10 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
 
   @HopMetadataProperty private String outputIsValidField = "is_valid";
   @HopMetadataProperty private String outputValidationMessageField = "validation_message";
+  @HopMetadataProperty private String outputLogFilePathField = "log_file_path";
+
+  @HopMetadataProperty private String logDirectory;
+  @HopMetadataProperty private boolean logFileTimestamp;
 
   @Override
   public void setDefault() {
@@ -52,6 +56,9 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
     failPipelineOnInvalid = false;
     outputIsValidField = "is_valid";
     outputValidationMessageField = "validation_message";
+    outputLogFilePathField = "log_file_path";
+    logDirectory = "";
+    logFileTimestamp = false;
   }
 
   @Override
@@ -65,6 +72,9 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
       throws HopTransformException {
     rowMeta.addValueMeta(new ValueMetaBoolean(resolveFieldName(outputIsValidField)));
     rowMeta.addValueMeta(new ValueMetaString(resolveFieldName(outputValidationMessageField)));
+    if (logDirectory != null && !logDirectory.isBlank()) {
+      rowMeta.addValueMeta(new ValueMetaString(resolveFieldName(outputLogFilePathField)));
+    }
   }
 
   private String resolveFieldName(String fieldName) {
@@ -178,5 +188,29 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
 
   public void setOutputValidationMessageField(String outputValidationMessageField) {
     this.outputValidationMessageField = outputValidationMessageField;
+  }
+
+  public String getOutputLogFilePathField() {
+    return outputLogFilePathField;
+  }
+
+  public void setOutputLogFilePathField(String outputLogFilePathField) {
+    this.outputLogFilePathField = outputLogFilePathField;
+  }
+
+  public String getLogDirectory() {
+    return logDirectory;
+  }
+
+  public void setLogDirectory(String logDirectory) {
+    this.logDirectory = logDirectory;
+  }
+
+  public boolean isLogFileTimestamp() {
+    return logFileTimestamp;
+  }
+
+  public void setLogFileTimestamp(boolean logFileTimestamp) {
+    this.logFileTimestamp = logFileTimestamp;
   }
 }

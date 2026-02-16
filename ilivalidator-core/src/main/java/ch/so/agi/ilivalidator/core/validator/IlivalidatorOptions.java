@@ -10,12 +10,16 @@ public final class IlivalidatorOptions {
   private final List<String> repositoryUrls;
   private final boolean runIlivalidator;
   private final boolean allObjectsAccessible;
+  private final String logDirectory;
+  private final boolean logFileTimestamp;
 
   private IlivalidatorOptions(Builder builder) {
     this.modelNames = Collections.unmodifiableList(new ArrayList<>(builder.modelNames));
     this.repositoryUrls = Collections.unmodifiableList(new ArrayList<>(builder.repositoryUrls));
     this.runIlivalidator = builder.runIlivalidator;
     this.allObjectsAccessible = builder.allObjectsAccessible;
+    this.logDirectory = builder.logDirectory;
+    this.logFileTimestamp = builder.logFileTimestamp;
   }
 
   public static Builder builder() {
@@ -42,12 +46,22 @@ public final class IlivalidatorOptions {
     return allObjectsAccessible;
   }
 
+  public String getLogDirectory() {
+    return logDirectory;
+  }
+
+  public boolean isLogFileTimestamp() {
+    return logFileTimestamp;
+  }
+
   public static final class Builder {
 
     private final List<String> modelNames = new ArrayList<>();
     private final List<String> repositoryUrls = new ArrayList<>();
     private boolean runIlivalidator = true;
     private boolean allObjectsAccessible;
+    private String logDirectory;
+    private boolean logFileTimestamp;
 
     private Builder() {}
 
@@ -80,6 +94,16 @@ public final class IlivalidatorOptions {
 
     public Builder allObjectsAccessible(boolean allObjectsAccessible) {
       this.allObjectsAccessible = allObjectsAccessible;
+      return this;
+    }
+
+    public Builder logDirectory(String logDirectory) {
+      this.logDirectory = logDirectory;
+      return this;
+    }
+
+    public Builder logFileTimestamp(boolean logFileTimestamp) {
+      this.logFileTimestamp = logFileTimestamp;
       return this;
     }
 

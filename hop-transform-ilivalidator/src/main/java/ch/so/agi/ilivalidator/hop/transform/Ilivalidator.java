@@ -131,6 +131,7 @@ public class Ilivalidator extends BaseTransform<IlivalidatorMeta, IlivalidatorDa
 
     data.outputIsValidIndex = data.outputRowMeta.indexOfValue(meta.getOutputIsValidField());
     data.outputValidationMessageIndex = data.outputRowMeta.indexOfValue(meta.getOutputValidationMessageField());
+    data.outputLogFilePathIndex = data.outputRowMeta.indexOfValue(meta.getOutputLogFilePathField());
 
     data.options = createOptions();
     data.initialized = true;
@@ -141,6 +142,8 @@ public class Ilivalidator extends BaseTransform<IlivalidatorMeta, IlivalidatorDa
         .modelNames(splitSemicolon(resolve(meta.getModelNames())))
         .repositoryUrls(splitSemicolon(resolve(meta.getRepositoryUrls())))
         .allObjectsAccessible(meta.isAllObjectsAccessible())
+        .logDirectory(resolve(meta.getLogDirectory()))
+        .logFileTimestamp(meta.isLogFileTimestamp())
         .build();
   }
 
@@ -172,6 +175,9 @@ public class Ilivalidator extends BaseTransform<IlivalidatorMeta, IlivalidatorDa
 
     outputRow[data.outputIsValidIndex] = result.isValid();
     outputRow[data.outputValidationMessageIndex] = toValidationMessage(result);
+    if (data.outputLogFilePathIndex >= 0) {
+      outputRow[data.outputLogFilePathIndex] = result.getLogFilePath();
+    }
 
     return outputRow;
   }

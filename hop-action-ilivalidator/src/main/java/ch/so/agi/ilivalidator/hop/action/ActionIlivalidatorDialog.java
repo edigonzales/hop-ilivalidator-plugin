@@ -48,6 +48,9 @@ public class ActionIlivalidatorDialog extends ActionDialog {
 
   private Button wWriteInvalidResultFiles;
 
+  private TextVar wLogDirectory;
+  private Button wLogFileTimestamp;
+
   public ActionIlivalidatorDialog(
       Shell parent, ActionIlivalidator action, WorkflowMeta workflowMeta, IVariables variables) {
     super(parent, workflowMeta, variables);
@@ -394,6 +397,46 @@ public class ActionIlivalidatorDialog extends ActionDialog {
     fdWriteInvalidResultFiles.right = new FormAttachment(100, 0);
     wWriteInvalidResultFiles.setLayoutData(fdWriteInvalidResultFiles);
 
+    Label wlLogDirectory = new Label(outputComposite, SWT.RIGHT);
+    wlLogDirectory.setText(
+        BaseMessages.getString(PKG, "ActionIlivalidatorDialog.Output.LogDirectory"));
+    wlLogDirectory.setToolTipText(
+        BaseMessages.getString(PKG, "ActionIlivalidatorDialog.Output.LogDirectory.Tooltip"));
+    PropsUi.setLook(wlLogDirectory);
+    FormData fdlLogDirectory = new FormData();
+    fdlLogDirectory.left = new FormAttachment(0, 0);
+    fdlLogDirectory.top = new FormAttachment(wWriteInvalidResultFiles, margin);
+    fdlLogDirectory.right = new FormAttachment(middle, -margin);
+    wlLogDirectory.setLayoutData(fdlLogDirectory);
+
+    wLogDirectory = new TextVar(variables, outputComposite, SWT.SINGLE | SWT.BORDER | SWT.LEFT);
+    PropsUi.setLook(wLogDirectory);
+    wLogDirectory.addModifyListener(e -> action.setChanged());
+    FormData fdLogDirectory = new FormData();
+    fdLogDirectory.left = new FormAttachment(middle, 0);
+    fdLogDirectory.top = new FormAttachment(wWriteInvalidResultFiles, margin);
+    fdLogDirectory.right = new FormAttachment(100, 0);
+    wLogDirectory.setLayoutData(fdLogDirectory);
+
+    Label wlLogFileTimestamp = new Label(outputComposite, SWT.RIGHT);
+    wlLogFileTimestamp.setText(
+        BaseMessages.getString(PKG, "ActionIlivalidatorDialog.Output.LogFileTimestamp"));
+    PropsUi.setLook(wlLogFileTimestamp);
+    FormData fdlLogFileTimestamp = new FormData();
+    fdlLogFileTimestamp.left = new FormAttachment(0, 0);
+    fdlLogFileTimestamp.top = new FormAttachment(wLogDirectory, margin);
+    fdlLogFileTimestamp.right = new FormAttachment(middle, -margin);
+    wlLogFileTimestamp.setLayoutData(fdlLogFileTimestamp);
+
+    wLogFileTimestamp = new Button(outputComposite, SWT.CHECK);
+    PropsUi.setLook(wLogFileTimestamp);
+    wLogFileTimestamp.addListener(SWT.Selection, e -> action.setChanged());
+    FormData fdLogFileTimestamp = new FormData();
+    fdLogFileTimestamp.left = new FormAttachment(middle, 0);
+    fdLogFileTimestamp.top = new FormAttachment(wLogDirectory, margin);
+    fdLogFileTimestamp.right = new FormAttachment(100, 0);
+    wLogFileTimestamp.setLayoutData(fdLogFileTimestamp);
+
     outputTab.setControl(outputComposite);
   }
 
@@ -445,6 +488,9 @@ public class ActionIlivalidatorDialog extends ActionDialog {
 
     wWriteInvalidResultFiles.setSelection(action.isWriteInvalidAsResultFiles());
 
+    wLogDirectory.setText(action.getLogDirectory() == null ? "" : action.getLogDirectory());
+    wLogFileTimestamp.setSelection(action.isLogFileTimestamp());
+
     wName.setFocus();
   }
 
@@ -484,6 +530,9 @@ public class ActionIlivalidatorDialog extends ActionDialog {
     action.setAllObjectsAccessible(wAllObjectsAccessible.getSelection());
 
     action.setWriteInvalidAsResultFiles(wWriteInvalidResultFiles.getSelection());
+
+    action.setLogDirectory(wLogDirectory.getText());
+    action.setLogFileTimestamp(wLogFileTimestamp.getSelection());
 
     action.setChanged();
     dispose();

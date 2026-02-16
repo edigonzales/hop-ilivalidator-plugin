@@ -9,11 +9,13 @@ public final class IlivalidatorResult {
   private final boolean valid;
   private final List<IlivalidatorIssue> issues;
   private final String checkedFile;
+  private final String logFilePath;
 
-  public IlivalidatorResult(boolean valid, List<IlivalidatorIssue> issues, String checkedFile) {
+  public IlivalidatorResult(boolean valid, List<IlivalidatorIssue> issues, String checkedFile, String logFilePath) {
     this.valid = valid;
     this.issues = Collections.unmodifiableList(Objects.requireNonNullElse(issues, List.of()));
     this.checkedFile = checkedFile;
+    this.logFilePath = logFilePath;
   }
 
   public boolean isValid() {
@@ -26,5 +28,9 @@ public final class IlivalidatorResult {
 
   public String getCheckedFile() {
     return checkedFile;
+  }
+
+  public String getLogFilePath() {
+    return logFilePath;
   }
 }

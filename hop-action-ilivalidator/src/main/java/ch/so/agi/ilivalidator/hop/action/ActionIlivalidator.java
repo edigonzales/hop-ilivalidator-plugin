@@ -59,6 +59,9 @@ public class ActionIlivalidator extends ActionBase implements IAction {
 
   @HopMetadataProperty private boolean writeInvalidAsResultFiles;
 
+  @HopMetadataProperty private String logDirectory;
+  @HopMetadataProperty private boolean logFileTimestamp;
+
   public ActionIlivalidator() {
     this("");
   }
@@ -88,6 +91,10 @@ public class ActionIlivalidator extends ActionBase implements IAction {
       overallValid &= validationResult.isValid();
 
       logValidationResult(file, validationResult);
+
+      if (validationResult.getLogFilePath() != null) {
+        registerLogFile(result, validationResult.getLogFilePath());
+      }
 
       if (!validationResult.isValid() && writeInvalidAsResultFiles) {
         registerInvalidResultFile(result, file);
@@ -154,6 +161,20 @@ public class ActionIlivalidator extends ActionBase implements IAction {
     }
   }
 
+  private void registerLogFile(Result result, String logFilePath) {
+    try {
+      ResultFile resultFile =
+          new ResultFile(
+              ResultFile.FILE_TYPE_LOG,
+              HopVfs.getFileObject(logFilePath),
+              getName(),
+              getParentWorkflowMeta() == null ? "" : getParentWorkflowMeta().getName());
+      result.getResultFiles().put(logFilePath, resultFile);
+    } catch (Exception e) {
+      logError("Unable to attach log file " + logFilePath + ": " + e.getMessage());
+    }
+  }
+
   private static IlivalidatorIssue firstErrorIssue(IlivalidatorResult validationResult) {
     for (IlivalidatorIssue issue : validationResult.getIssues()) {
       if (issue.getSeverity() == IlivalidatorIssue.Severity.ERROR) {
@@ -175,6 +196,8 @@ public class ActionIlivalidator extends ActionBase implements IAction {
         .modelNames(splitSemicolon(resolve(modelNames)))
         .repositoryUrls(splitSemicolon(resolve(repositoryUrls)))
         .allObjectsAccessible(allObjectsAccessible)
+        .logDirectory(resolve(logDirectory))
+        .logFileTimestamp(logFileTimestamp)
         .build();
   }
 
@@ -381,5 +404,21 @@ public class ActionIlivalidator extends ActionBase implements IAction {
 
   public void setWriteInvalidAsResultFiles(boolean writeInvalidAsResultFiles) {
     this.writeInvalidAsResultFiles = writeInvalidAsResultFiles;
+  }
+
+  public String getLogDirectory() {
+    return logDirectory;
+  }
+
+  public void setLogDirectory(String logDirectory) {
+    this.logDirectory = logDirectory;
+  }
+
+  public boolean isLogFileTimestamp() {
+    return logFileTimestamp;
+  }
+
+  public void setLogFileTimestamp(boolean logFileTimestamp) {
+    this.logFileTimestamp = logFileTimestamp;
   }
 }

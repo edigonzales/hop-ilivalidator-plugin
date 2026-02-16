@@ -86,6 +86,16 @@ public class IlivalidatorService {
       settings.setValue(Validator.SETTING_ALL_OBJECTS_ACCESSIBLE, Validator.TRUE);
     }
 
+    if (options.getLogDirectory() != null && !options.getLogDirectory().isBlank()) {
+      java.nio.file.Path logDir = java.nio.file.Path.of(options.getLogDirectory());
+      java.nio.file.Path logFile = logDir.resolve(path.getFileName() + ".log");
+      settings.setValue(Validator.SETTING_LOGFILE, logFile.toString());
+      if (options.isLogFileTimestamp()) {
+        settings.setValue(Validator.SETTING_LOGFILE_TIMESTAMP, Validator.TRUE);
+      }
+      out.setLogFilePath(logFile.toString());
+    }
+
     EhiLogger logger = EhiLogger.getInstance();
     StdListener stdListener = StdListener.getInstance();
     CollectingLogListener logListener = new CollectingLogListener(out);

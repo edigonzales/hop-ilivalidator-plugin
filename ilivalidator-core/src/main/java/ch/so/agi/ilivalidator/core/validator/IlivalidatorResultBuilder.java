@@ -9,6 +9,7 @@ public final class IlivalidatorResultBuilder {
   private final List<IlivalidatorIssue> issues = new ArrayList<>();
   private boolean valid = true;
   private final String checkedFile;
+  private String logFilePath;
 
   public IlivalidatorResultBuilder(String checkedFile) {
     this.checkedFile = checkedFile;
@@ -35,10 +36,14 @@ public final class IlivalidatorResultBuilder {
     valid = false;
   }
 
+  public void setLogFilePath(String logFilePath) {
+    this.logFilePath = logFilePath;
+  }
+
   public IlivalidatorResult build() {
     boolean hasErrors =
         issues.stream().anyMatch(issue -> issue.getSeverity() == IlivalidatorIssue.Severity.ERROR);
     boolean finalValid = valid && !hasErrors;
-    return new IlivalidatorResult(finalValid, List.copyOf(issues), checkedFile);
+    return new IlivalidatorResult(finalValid, List.copyOf(issues), checkedFile, logFilePath);
   }
 }

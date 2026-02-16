@@ -40,6 +40,10 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
   private Text wOutputIsValidField;
   private Text wOutputValidationMessageField;
+  private Text wOutputLogFilePathField;
+
+  private TextVar wLogDirectory;
+  private Button wLogFileTimestamp;
 
   public IlivalidatorDialog(
       Shell parent, IVariables variables, IlivalidatorMeta transformMeta, PipelineMeta pipelineMeta) {
@@ -250,6 +254,33 @@ public class IlivalidatorDialog extends BaseTransformDialog {
         BaseMessages.getString(PKG, "IlivalidatorDialog.OutputValidationMessageField.Label"),
         wOutputValidationMessageField,
         lastControl);
+    lastControl = wOutputValidationMessageField;
+
+    wOutputLogFilePathField = new Text(outputComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    wOutputLogFilePathField.addModifyListener(e -> input.setChanged());
+    placeControl(
+        outputComposite,
+        BaseMessages.getString(PKG, "IlivalidatorDialog.OutputLogFilePathField.Label"),
+        wOutputLogFilePathField,
+        lastControl);
+    lastControl = wOutputLogFilePathField;
+
+    wLogDirectory = new TextVar(variables, outputComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+    wLogDirectory.addModifyListener(e -> input.setChanged());
+    placeControl(
+        outputComposite,
+        BaseMessages.getString(PKG, "IlivalidatorDialog.LogDirectory.Label"),
+        wLogDirectory,
+        lastControl);
+    lastControl = wLogDirectory;
+
+    wLogFileTimestamp = new Button(outputComposite, SWT.CHECK);
+    wLogFileTimestamp.addListener(SWT.Selection, e -> input.setChanged());
+    placeControl(
+        outputComposite,
+        BaseMessages.getString(PKG, "IlivalidatorDialog.LogFileTimestamp.Label"),
+        wLogFileTimestamp,
+        lastControl);
 
     outputTab.setControl(outputComposite);
   }
@@ -298,6 +329,13 @@ public class IlivalidatorDialog extends BaseTransformDialog {
         input.getOutputValidationMessageField() == null
             ? "validation_message"
             : input.getOutputValidationMessageField());
+    wOutputLogFilePathField.setText(
+        input.getOutputLogFilePathField() == null
+            ? "log_file_path"
+            : input.getOutputLogFilePathField());
+
+    wLogDirectory.setText(input.getLogDirectory() == null ? "" : input.getLogDirectory());
+    wLogFileTimestamp.setSelection(input.isLogFileTimestamp());
 
     wTransformName.selectAll();
     wTransformName.setFocus();
@@ -328,6 +366,10 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
     input.setOutputIsValidField(wOutputIsValidField.getText());
     input.setOutputValidationMessageField(wOutputValidationMessageField.getText());
+    input.setOutputLogFilePathField(wOutputLogFilePathField.getText());
+
+    input.setLogDirectory(wLogDirectory.getText());
+    input.setLogFileTimestamp(wLogFileTimestamp.getSelection());
 
     dispose();
   }
