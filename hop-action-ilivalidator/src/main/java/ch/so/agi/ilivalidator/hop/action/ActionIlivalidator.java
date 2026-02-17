@@ -261,7 +261,7 @@ public class ActionIlivalidator extends ActionBase implements IAction {
     return values;
   }
 
-  private static final class MaskMatcher {
+  static final class MaskMatcher {
 
     private final boolean defaultMatch;
     private final Pattern regex;

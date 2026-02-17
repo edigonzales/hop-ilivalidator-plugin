@@ -19,6 +19,8 @@ import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -35,7 +37,9 @@ public class ActionIlivalidatorDialog extends ActionDialog {
   private Button wModeSingle;
   private Button wModeFolder;
   private TextVar wFilePath;
+  private Button wbFilePath;
   private TextVar wFolderPath;
+  private Button wbFolderPath;
   private Button wRecursive;
   private TextVar wIncludeMask;
   private TextVar wExcludeMask;
@@ -49,6 +53,7 @@ public class ActionIlivalidatorDialog extends ActionDialog {
   private Button wWriteInvalidResultFiles;
 
   private TextVar wLogDirectory;
+  private Button wbLogDirectory;
   private Button wLogFileTimestamp;
 
   public ActionIlivalidatorDialog(
@@ -191,13 +196,22 @@ public class ActionIlivalidatorDialog extends ActionDialog {
     fdlFilePath.right = new FormAttachment(middle, -margin);
     wlFilePath.setLayoutData(fdlFilePath);
 
+    wbFilePath = new Button(inputComposite, SWT.PUSH);
+    wbFilePath.setText("Browse...");
+    PropsUi.setLook(wbFilePath);
+    FormData fdbFilePath = new FormData();
+    fdbFilePath.right = new FormAttachment(100, 0);
+    fdbFilePath.top = new FormAttachment(modeComposite, 0);
+    wbFilePath.setLayoutData(fdbFilePath);
+    wbFilePath.addListener(SWT.Selection, e -> browseFile(wFilePath));
+
     wFilePath = new TextVar(variables, inputComposite, SWT.SINGLE | SWT.BORDER | SWT.LEFT);
     PropsUi.setLook(wFilePath);
     wFilePath.addModifyListener(e -> action.setChanged());
     FormData fdFilePath = new FormData();
     fdFilePath.left = new FormAttachment(middle, 0);
     fdFilePath.top = new FormAttachment(modeComposite, margin);
-    fdFilePath.right = new FormAttachment(100, 0);
+    fdFilePath.right = new FormAttachment(wbFilePath, -margin);
     wFilePath.setLayoutData(fdFilePath);
 
     Label wlFolderPath = new Label(inputComposite, SWT.RIGHT);
@@ -211,13 +225,22 @@ public class ActionIlivalidatorDialog extends ActionDialog {
     fdlFolderPath.right = new FormAttachment(middle, -margin);
     wlFolderPath.setLayoutData(fdlFolderPath);
 
+    wbFolderPath = new Button(inputComposite, SWT.PUSH);
+    wbFolderPath.setText("Browse...");
+    PropsUi.setLook(wbFolderPath);
+    FormData fdbFolderPath = new FormData();
+    fdbFolderPath.right = new FormAttachment(100, 0);
+    fdbFolderPath.top = new FormAttachment(wFilePath, 0);
+    wbFolderPath.setLayoutData(fdbFolderPath);
+    wbFolderPath.addListener(SWT.Selection, e -> browseDirectory(wFolderPath));
+
     wFolderPath = new TextVar(variables, inputComposite, SWT.SINGLE | SWT.BORDER | SWT.LEFT);
     PropsUi.setLook(wFolderPath);
     wFolderPath.addModifyListener(e -> action.setChanged());
     FormData fdFolderPath = new FormData();
     fdFolderPath.left = new FormAttachment(middle, 0);
     fdFolderPath.top = new FormAttachment(wFilePath, margin);
-    fdFolderPath.right = new FormAttachment(100, 0);
+    fdFolderPath.right = new FormAttachment(wbFolderPath, -margin);
     wFolderPath.setLayoutData(fdFolderPath);
 
     Label wlRecursive = new Label(inputComposite, SWT.RIGHT);
@@ -409,13 +432,22 @@ public class ActionIlivalidatorDialog extends ActionDialog {
     fdlLogDirectory.right = new FormAttachment(middle, -margin);
     wlLogDirectory.setLayoutData(fdlLogDirectory);
 
+    wbLogDirectory = new Button(outputComposite, SWT.PUSH);
+    wbLogDirectory.setText("Browse...");
+    PropsUi.setLook(wbLogDirectory);
+    FormData fdbLogDirectory = new FormData();
+    fdbLogDirectory.right = new FormAttachment(100, 0);
+    fdbLogDirectory.top = new FormAttachment(wWriteInvalidResultFiles, 0);
+    wbLogDirectory.setLayoutData(fdbLogDirectory);
+    wbLogDirectory.addListener(SWT.Selection, e -> browseDirectory(wLogDirectory));
+
     wLogDirectory = new TextVar(variables, outputComposite, SWT.SINGLE | SWT.BORDER | SWT.LEFT);
     PropsUi.setLook(wLogDirectory);
     wLogDirectory.addModifyListener(e -> action.setChanged());
     FormData fdLogDirectory = new FormData();
     fdLogDirectory.left = new FormAttachment(middle, 0);
     fdLogDirectory.top = new FormAttachment(wWriteInvalidResultFiles, margin);
-    fdLogDirectory.right = new FormAttachment(100, 0);
+    fdLogDirectory.right = new FormAttachment(wbLogDirectory, -margin);
     wLogDirectory.setLayoutData(fdLogDirectory);
 
     Label wlLogFileTimestamp = new Label(outputComposite, SWT.RIGHT);
@@ -438,6 +470,32 @@ public class ActionIlivalidatorDialog extends ActionDialog {
     wLogFileTimestamp.setLayoutData(fdLogFileTimestamp);
 
     outputTab.setControl(outputComposite);
+  }
+
+  private void browseFile(TextVar textVar) {
+    FileDialog dialog = new FileDialog(shell, SWT.OPEN);
+    String currentPath = textVar.getText();
+    if (currentPath != null && !currentPath.isEmpty()) {
+      dialog.setFileName(currentPath);
+    }
+    String path = dialog.open();
+    if (path != null) {
+      textVar.setText(path);
+      action.setChanged();
+    }
+  }
+
+  private void browseDirectory(TextVar textVar) {
+    DirectoryDialog dialog = new DirectoryDialog(shell, SWT.OPEN);
+    String currentPath = textVar.getText();
+    if (currentPath != null && !currentPath.isEmpty()) {
+      dialog.setFilterPath(currentPath);
+    }
+    String path = dialog.open();
+    if (path != null) {
+      textVar.setText(path);
+      action.setChanged();
+    }
   }
 
   private Button createCheckbox(
@@ -497,7 +555,9 @@ public class ActionIlivalidatorDialog extends ActionDialog {
   private void enableInputModeControls() {
     boolean folder = wModeFolder.getSelection();
     wFilePath.setEnabled(!folder);
+    wbFilePath.setEnabled(!folder);
     wFolderPath.setEnabled(folder);
+    wbFolderPath.setEnabled(folder);
     wRecursive.setEnabled(folder);
     wIncludeMask.setEnabled(folder);
     wExcludeMask.setEnabled(folder);

@@ -1,0 +1,45 @@
+name: Create Draft Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 0.1.0)'
+        required: true
+        default: '0.1.0'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build assemblies
+        run: mvn -pl assemblies/assemblies-action-ilivalidator,assemblies/assemblies-transform-ilivalidator -am -DskipTests package
+
+      - name: Create tag
+        id: tag
+        run: echo "tag=draft-${{ github.event.inputs.version }}-${{ github.run_number }}" >> $GITHUB_OUTPUT
+
+      - name: Create/Update Draft Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: "Draft Release ${{ github.event.inputs.version }} (Build ${{ github.run_number }})"
+          draft: true
+          generate_release_notes: true
+          files: |
+            assemblies/assemblies-action-ilivalidator/target/hop-action-ilivalidator-${{ github.event.inputs.version }}-SNAPSHOT.zip
+            assemblies/assemblies-transform-ilivalidator/target/hop-transform-ilivalidator-${{ github.event.inputs.version }}-SNAPSHOT.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

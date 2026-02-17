@@ -18,6 +18,8 @@ import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
@@ -31,6 +33,7 @@ public class IlivalidatorDialog extends BaseTransformDialog {
   private Button wUseFilePathField;
   private ComboVar wFilePathField;
   private TextVar wStaticFilePath;
+  private Button wbStaticFilePath;
 
   private TextVar wModelNames;
   private TextVar wRepositoryUrls;
@@ -43,6 +46,7 @@ public class IlivalidatorDialog extends BaseTransformDialog {
   private Text wOutputLogFilePathField;
 
   private TextVar wLogDirectory;
+  private Button wbLogDirectory;
   private Button wLogFileTimestamp;
 
   public IlivalidatorDialog(
@@ -165,11 +169,14 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
     wStaticFilePath = new TextVar(variables, inputComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
     wStaticFilePath.addModifyListener(e -> input.setChanged());
-    placeControl(
+    wbStaticFilePath = new Button(inputComposite, SWT.PUSH | SWT.CENTER);
+    placeControlWithBrowse(
         inputComposite,
         BaseMessages.getString(PKG, "IlivalidatorDialog.StaticFilePath.Label"),
         wStaticFilePath,
-        lastControl);
+        lastControl,
+        wbStaticFilePath,
+        e -> browseFile(wStaticFilePath));
 
     inputTab.setControl(inputComposite);
   }
@@ -267,11 +274,14 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
     wLogDirectory = new TextVar(variables, outputComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
     wLogDirectory.addModifyListener(e -> input.setChanged());
-    placeControl(
+    wbLogDirectory = new Button(outputComposite, SWT.PUSH | SWT.CENTER);
+    placeControlWithBrowse(
         outputComposite,
         BaseMessages.getString(PKG, "IlivalidatorDialog.LogDirectory.Label"),
         wLogDirectory,
-        lastControl);
+        lastControl,
+        wbLogDirectory,
+        e -> browseDirectory(wLogDirectory));
     lastControl = wLogDirectory;
 
     wLogFileTimestamp = new Button(outputComposite, SWT.CHECK);
@@ -306,10 +316,72 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     control.setLayoutData(fdControl);
   }
 
+  private void placeControlWithBrowse(
+      Composite parent,
+      String labelText,
+      Control control,
+      Control under,
+      Button browseButton,
+      org.eclipse.swt.widgets.Listener browseListener) {
+    int middle = props.getMiddlePct();
+    int margin = PropsUi.getMargin();
+
+    Label label = new Label(parent, SWT.RIGHT);
+    label.setText(labelText);
+    PropsUi.setLook(label);
+    FormData fdLabel = new FormData();
+    fdLabel.left = new FormAttachment(0, 0);
+    fdLabel.right = new FormAttachment(middle, -margin);
+    fdLabel.top = under == null ? new FormAttachment(0, 0) : new FormAttachment(under, margin);
+    label.setLayoutData(fdLabel);
+
+    browseButton.setText("Browse...");
+    PropsUi.setLook(browseButton);
+    FormData fdBrowse = new FormData();
+    fdBrowse.right = new FormAttachment(100, 0);
+    fdBrowse.top = under == null ? new FormAttachment(0, 0) : new FormAttachment(under, 0);
+    browseButton.setLayoutData(fdBrowse);
+    browseButton.addListener(SWT.Selection, browseListener);
+
+    PropsUi.setLook(control);
+    FormData fdControl = new FormData();
+    fdControl.left = new FormAttachment(middle, 0);
+    fdControl.right = new FormAttachment(browseButton, -margin);
+    fdControl.top = under == null ? new FormAttachment(0, 0) : new FormAttachment(under, margin);
+    control.setLayoutData(fdControl);
+  }
+
+  private void browseFile(TextVar textVar) {
+    FileDialog dialog = new FileDialog(shell, SWT.OPEN);
+    String currentPath = textVar.getText();
+    if (currentPath != null && !currentPath.isEmpty()) {
+      dialog.setFileName(currentPath);
+    }
+    String path = dialog.open();
+    if (path != null) {
+      textVar.setText(path);
+      input.setChanged();
+    }
+  }
+
+  private void browseDirectory(TextVar textVar) {
+    DirectoryDialog dialog = new DirectoryDialog(shell, SWT.OPEN);
+    String currentPath = textVar.getText();
+    if (currentPath != null && !currentPath.isEmpty()) {
+      dialog.setFilterPath(currentPath);
+    }
+    String path = dialog.open();
+    if (path != null) {
+      textVar.setText(path);
+      input.setChanged();
+    }
+  }
+
   private void enableDisableControls() {
     boolean useField = wUseFilePathField.getSelection();
     wFilePathField.setEnabled(useField);
     wStaticFilePath.setEnabled(!useField);
+    wbStaticFilePath.setEnabled(!useField);
   }
 
   private void getData() {

@@ -15,7 +15,7 @@
   <name>Debug Hop Layout</name>
 
   <properties>
-    <hop.client.url>https://archive.apache.org/dist/hop/${hop.version}/apache-hop-client-${hop.version}.zip</hop.client.url>
+    <hop.client.url>https://mirror.init7.net/apache/hop/${hop.version}/apache-hop-client-${hop.version}.zip</hop.client.url>
     <hop.client.zip>${project.build.directory}/apache-hop-client-${hop.version}.zip</hop.client.zip>
     <action.zip>${project.basedir}/../assemblies-action-ilivalidator/target/assemblies-action-ilivalidator-${project.version}.zip</action.zip>
     <transform.zip>${project.basedir}/../assemblies-transform-ilivalidator/target/assemblies-transform-ilivalidator-${project.version}.zip</transform.zip>
