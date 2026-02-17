@@ -22,6 +22,21 @@ Erstellt ein Draft Release auf GitHub mit den gebauten Plugin-Assemblys.
 5. Draft Release erstellen/aktualisieren
 6. ZIP-Dateien als Release-Assets hochladen
 
+**Berechtigungen:**
+
+Der Workflow benötigt folgende Berechtigungen:
+- `contents: write` - Zum Erstellen von Releases
+- `actions: read` - Zum Lesen der Build-Informationen
+
+**Repository Settings:**
+
+Falls der Workflow mit einem 403-Fehler schlägt, stellen Sie sicher:
+
+1. Gehen Sie zu **Settings** → **Actions** → **General**
+2. Unter **Workflow permissions**:
+   - Wählen Sie **Read and write permissions**
+   - Aktivieren Sie **Allow GitHub Actions to create and approve pull requests**
+
 **Verwendung:**
 
 1. Gehen Sie auf GitHub zum Tab **Actions**
