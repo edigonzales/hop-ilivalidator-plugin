@@ -1,6 +1,6 @@
 # INTERLIS Validator Plugin für Apache Hop installieren
 
-Diese Anleitung erklärt Ihnen, wie Sie die INTERLIS Validator Plugins in Apache Hop installieren. 
+Diese Anleitung erklärt Ihnen, wie Sie die INTERLIS Validator Plugins in Apache Hop installieren. Die Installation ist einfach und erfordert keine technischen Kenntnisse.
 
 ## Voraussetzungen
 
@@ -31,76 +31,48 @@ Diese Anleitung erklärt Ihnen, wie Sie die INTERLIS Validator Plugins in Apache
 
 ---
 
-## Schritt 3: Plugin-Verzeichnis öffnen
+## Schritt 3: ZIP-Dateien entpacken
 
-Navigieren Sie im Hop-Verzeichnis zu folgendem Pfad:
+**Wichtig:** Die ZIP-Dateien enthalten bereits die korrekte Ordnerstruktur. Sie müssen die ZIP-Dateien einfach direkt im Hop-Verzeichnis entpacken.
 
+### Action-Plugin installieren
+
+1. Wechseln Sie in das Hop-Verzeichnis
+2. Entpacken Sie die Datei `hop-action-ilivalidator-*.zip` **direkt im Hop-Verzeichnis**
+
+Die ZIP-Datei erstellt automatisch folgende Ordnerstruktur:
 ```
-plugins/
+Hop-Verzeichnis/
+├── plugins/
+│   └── actions/
+│       └── ilivalidator/
+│           └── hop-action-ilivalidator-*.jar
 ```
 
-Falls das Verzeichnis `plugins` nicht existiert, erstellen Sie es einfach.
+### Transform-Plugin installieren
+
+1. Wechseln Sie in das Hop-Verzeichnis (falls nicht schon dort)
+2. Entpacken Sie die Datei `hop-transform-ilivalidator-*.zip` **direkt im Hop-Verzeichnis**
+
+Die ZIP-Datei erstellt automatisch folgende Ordnerstruktur:
+```
+Hop-Verzeichnis/
+├── plugins/
+│   └── transforms/
+│       └── ilivalidator/
+│           └── hop-transform-ilivalidator-*.jar
+```
 
 ---
 
-## Schritt 4: Action-Plugin installieren
-
-1. Öffnen Sie im `plugins`-Verzeichnis das Verzeichnis `actions`
-   - Pfad: `plugins/actions/`
-   
-2. Falls das Verzeichnis `actions` nicht existiert, erstellen Sie es
-
-3. Erstellen Sie im `actions`-Verzeichnis einen neuen Ordner namens `ilivalidator`
-   - Pfad: `plugins/actions/ilivalidator/`
-
-4. Entpacken Sie die heruntergeladene Datei `hop-action-ilivalidator-*.zip`
-
-5. Kopieren Sie den **gesamten Inhalt** des entpackten ZIP-Archivs in das Verzeichnis `plugins/actions/ilivalidator/`
-
-   **Wichtig:** Kopieren Sie den Inhalt direkt in das Verzeichnis, nicht den gesamten Ordner aus dem ZIP. Die Struktur sollte danach so aussehen:
-   
-   ```
-   plugins/actions/ilivalidator/
-   ├── META-INF/
-   ├── lib/
-   └── plugins.xml
-   ```
-
----
-
-## Schritt 5: Transform-Plugin installieren
-
-1. Öffnen Sie im `plugins`-Verzeichnis das Verzeichnis `transforms`
-   - Pfad: `plugins/transforms/`
-   
-2. Falls das Verzeichnis `transforms` nicht existiert, erstellen Sie es
-
-3. Erstellen Sie im `transforms`-Verzeichnis einen neuen Ordner namens `ilivalidator`
-   - Pfad: `plugins/transforms/ilivalidator/`
-
-4. Entpacken Sie die heruntergeladene Datei `hop-transform-ilivalidator-*.zip`
-
-5. Kopieren Sie den **gesamten Inhalt** des entpackten ZIP-Archivs in das Verzeichnis `plugins/transforms/ilivalidator/`
-
-   **Wichtig:** Kopieren Sie den Inhalt direkt in das Verzeichnis, nicht den gesamten Ordner aus dem ZIP. Die Struktur sollte danach so aussehen:
-   
-   ```
-   plugins/transforms/ilivalidator/
-   ├── META-INF/
-   ├── lib/
-   └── plugins.xml
-   ```
-
----
-
-## Schritt 6: Apache Hop neu starten
+## Schritt 4: Apache Hop neu starten
 
 1. Falls Apache Hop gerade läuft, schließen Sie das Programm komplett
 2. Starten Sie Apache Hop neu (Doppelklick auf `hop-gui.sh` bzw. `hop-gui.bat`)
 
 ---
 
-## Schritt 7: Installation überprüfen
+## Schritt 5: Installation überprüfen
 
 Nach dem Neustart von Apache Hop können Sie die Installation überprüfen:
 
@@ -125,13 +97,33 @@ Nach dem Neustart von Apache Hop können Sie die Installation überprüfen:
 ### Das Plugin wird nicht angezeigt
 
 - **Hop neu starten:** Manchmal muss Hop mehrmals neu gestartet werden
-- **Plugin-Verzeichnis prüfen:** Stellen Sie sicher, dass die Dateien direkt im `ilivalidator`-Verzeichnis liegen und nicht in einem Unterordner
+- **Plugin-Verzeichnis prüfen:** Stellen Sie sicher, dass die JAR-Datei im richtigen Verzeichnis liegt:
+  - Action: `plugins/actions/ilivalidator/hop-action-ilivalidator-*.jar`
+  - Transform: `plugins/transforms/ilivalidator/hop-transform-ilivalidator-*.jar`
 - **Hop-Version:** Stellen Sie sicher, dass Sie eine kompatible Hop-Version verwenden (ab 2.17)
 
 ### Fehlermeldung beim Start
 
 - **Java-Version prüfen:** INTERLIS Validator benötigt Java 17 oder höher
-- **Log-Datei prüfen:** Im Hop-Verzeichnis gibt es eine `logs`-Ordner mit Protokolldateien
+- **Log-Datei prüfen:** Im Hop-Verzeichnis gibt es einen `logs`-Ordner mit Protokolldateien
+
+### Falsche Entpackung unter Windows
+
+Unter Windows passiert es manchmal, dass ZIP-Dateien falsch entpackt werden:
+
+**Falsch:** Die ZIP erstellt einen zusätzlichen Ordner
+```
+Hop-Verzeichnis/
+└── plugins/
+    └── actions/
+        └── ilivalidator/
+            └── plugins/          ← falsch!
+                └── actions/      ← falsch!
+                    └── ilivalidator/
+                        └── hop-action-ilivalidator-*.jar
+```
+
+**Lösung:** Verschieben Sie den Inhalt aus dem falschen Unterordner direkt nach `plugins/actions/ilivalidator/`
 
 ---
 
