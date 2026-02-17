@@ -4,18 +4,18 @@ Apache Hop 2.17 plugin suite for INTERLIS validation.
 
 ## Modules
 
-- `/Users/stefan/sources/hop-ilivalidator-plugin/ilivalidator-core`
+- `./ilivalidator-core`
   - Hop-independent validation core with ilivalidator integration and result model.
-- `/Users/stefan/sources/hop-ilivalidator-plugin/hop-action-ilivalidator`
+- `./hop-action-ilivalidator`
   - Workflow action plugin for single-file or folder validation with binary workflow result.
-- `/Users/stefan/sources/hop-ilivalidator-plugin/hop-transform-ilivalidator`
+- `./hop-transform-ilivalidator`
   - Pipeline transform plugin with row-level output fields (`is_valid`, `validation_message`).
-- `/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/assemblies-action-ilivalidator`
+- `./assemblies/assemblies-action-ilivalidator`
   - Install ZIP for action plugin structure under `plugins/actions/ilivalidator`.
-- `/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/assemblies-transform-ilivalidator`
+- `./assemblies/assemblies-transform-ilivalidator`
   - Install ZIP for transform plugin structure under `plugins/transforms/ilivalidator`.
-- `/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/debug`
-  - Creates local debug layout in `/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/debug/target/hop`.
+- `./assemblies/debug`
+  - Creates local debug layout in `./assemblies/debug/target/hop`.
 
 ## Build
 
@@ -51,8 +51,8 @@ mvn -pl assemblies/assemblies-action-ilivalidator,assemblies/assemblies-transfor
 2. Extract into your Hop home:
 
 ```bash
-unzip -o /Users/stefan/sources/hop-ilivalidator-plugin/assemblies/assemblies-action-ilivalidator/target/assemblies-action-ilivalidator-0.1.0-SNAPSHOT.zip -d "$HOP_HOME"
-unzip -o /Users/stefan/sources/hop-ilivalidator-plugin/assemblies/assemblies-transform-ilivalidator/target/assemblies-transform-ilivalidator-0.1.0-SNAPSHOT.zip -d "$HOP_HOME"
+unzip -o ./assemblies/assemblies-action-ilivalidator/target/assemblies-action-ilivalidator-0.1.0-SNAPSHOT.zip -d "$HOP_HOME"
+unzip -o ./assemblies/assemblies-transform-ilivalidator/target/assemblies-transform-ilivalidator-0.1.0-SNAPSHOT.zip -d "$HOP_HOME"
 ```
 
 3. Resulting plugin folders:
@@ -73,7 +73,7 @@ The debug module downloads `apache-hop-client-${hop.version}.zip` from the Apach
 
 Output:
 
-- `/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/debug/target/hop`
+- `./assemblies/debug/target/hop`
 
 Useful properties:
 
@@ -88,7 +88,7 @@ mvn -pl assemblies/debug -am -DskipTests package
 Start Hop GUI from debug layout:
 
 ```bash
-/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/debug/target/hop/hop-gui.sh
+./assemblies/debug/target/hop/hop-gui.sh
 ```
 
 ## Fast development loop
@@ -96,7 +96,7 @@ Start Hop GUI from debug layout:
 You do not need to rebuild full assemblies and manually unzip/copy on every change.
 
 1. Keep using the debug Hop from:
-   - `/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/debug/target/hop`
+   - `./assemblies/debug/target/hop`
 2. Rebuild only changed plugin modules + core and sync jars:
 
 ```bash
@@ -136,7 +136,7 @@ For the shortest feedback loop:
 
 1. Start Hop GUI in IDE debug mode with:
    - Main class `org.apache.hop.ui.hopgui.HopGui`
-   - Working directory `/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/debug/target/hop`
+   - Working directory `./assemblies/debug/target/hop`
 2. For small Java code edits (method body only), trigger IDE build and use HotSwap.
 3. For signature/field/class changes, run `./scripts/dev-sync-debug.sh` and restart Hop.
 
@@ -157,7 +157,7 @@ Technical ilivalidator failures (for example `compiler failed`, unsupported INTE
 ## Recommended Hop GUI run configuration
 
 - Main class: `org.apache.hop.ui.hopgui.HopGui`
-- Working directory: `/Users/stefan/sources/hop-ilivalidator-plugin/assemblies/debug/target/hop`
+- Working directory: `./assemblies/debug/target/hop`
 - VM options (example): `-Dfile.encoding=UTF-8`
 
 ## Smoke tests

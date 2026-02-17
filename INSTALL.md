@@ -1,6 +1,6 @@
 # INTERLIS Validator Plugin für Apache Hop installieren
 
-Diese Anleitung erklärt Ihnen, wie Sie die INTERLIS Validator Plugins in Apache Hop installieren. Die Installation ist einfach und erfordert keine technischen Kenntnisse.
+Diese Anleitung erklärt Ihnen, wie Sie die INTERLIS Validator Plugins in Apache Hop installieren. 
 
 ## Voraussetzungen
 
