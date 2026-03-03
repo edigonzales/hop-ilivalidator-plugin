@@ -1,5 +1,6 @@
 package ch.so.agi.ilivalidator.hop.transform;
 
+import ch.so.agi.ilivalidator.core.validator.IlivalidatorExternalLogLevel;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorIssue;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptions;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorResult;
@@ -32,7 +33,7 @@ public class Ilivalidator extends BaseTransform<IlivalidatorMeta, IlivalidatorDa
           "ILI_COMPILER_ERROR",
           "ILI_MODEL_RESOLUTION_ERROR");
 
-  private final IlivalidatorService service = new IlivalidatorService();
+  private final IlivalidatorService service = new IlivalidatorService(this::logExternalMessage);
 
   public Ilivalidator(
       TransformMeta transformMeta,
@@ -180,6 +181,32 @@ public class Ilivalidator extends BaseTransform<IlivalidatorMeta, IlivalidatorDa
     }
 
     return outputRow;
+  }
+
+  private void logExternalMessage(
+      IlivalidatorExternalLogLevel level, String message, Throwable throwable) {
+    if (level == null || message == null || message.isBlank()) {
+      return;
+    }
+    switch (level) {
+      case ERROR -> {
+        if (throwable == null) {
+          logError(message);
+        } else {
+          logError(message, throwable);
+        }
+      }
+      case WARN, INFO -> {
+        if (isBasic()) {
+          logBasic(message);
+        }
+      }
+      case DEBUG -> {
+        if (isDetailed()) {
+          logDetailed(message);
+        }
+      }
+    }
   }
 
   private String toValidationMessage(IlivalidatorResult result) {

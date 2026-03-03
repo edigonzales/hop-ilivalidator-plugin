@@ -1,5 +1,6 @@
 package ch.so.agi.ilivalidator.hop.action;
 
+import ch.so.agi.ilivalidator.core.validator.IlivalidatorExternalLogLevel;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorIssue;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptions;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorResult;
@@ -82,7 +83,7 @@ public class ActionIlivalidator extends ActionBase implements IAction {
       return result;
     }
 
-    IlivalidatorService service = new IlivalidatorService();
+    IlivalidatorService service = new IlivalidatorService(this::logExternalMessage);
     IlivalidatorOptions options = toOptions();
 
     boolean overallValid = true;
@@ -189,6 +190,32 @@ public class ActionIlivalidator extends ActionBase implements IAction {
       return issue.getMessage();
     }
     return issue.getCode() == null || issue.getCode().isBlank() ? "Validation failed" : issue.getCode();
+  }
+
+  private void logExternalMessage(
+      IlivalidatorExternalLogLevel level, String message, Throwable throwable) {
+    if (level == null || message == null || message.isBlank()) {
+      return;
+    }
+    switch (level) {
+      case ERROR -> {
+        if (throwable == null) {
+          logError(message);
+        } else {
+          logError(message, throwable);
+        }
+      }
+      case WARN, INFO -> {
+        if (isBasic()) {
+          logBasic(message);
+        }
+      }
+      case DEBUG -> {
+        if (isDetailed()) {
+          logDetailed(message);
+        }
+      }
+    }
   }
 
   private IlivalidatorOptions toOptions() {

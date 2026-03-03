@@ -3,7 +3,6 @@ package ch.so.agi.ilivalidator.core.validator;
 import ch.ehi.basics.logging.EhiLogger;
 import ch.ehi.basics.logging.LogEvent;
 import ch.ehi.basics.logging.LogListener;
-import ch.ehi.basics.logging.StdListener;
 import ch.ehi.basics.settings.Settings;
 import ch.interlis.iox.IoxLogEvent;
 import java.io.IOException;
@@ -26,6 +25,15 @@ public class IlivalidatorService {
   private static final String DEFAULT_VALIDATION_FAILURE_MESSAGE =
       "INTERLIS validation failed without detailed error event";
   private static final Object VALIDATOR_LOCK = new Object();
+  private final IlivalidatorExternalLogSink externalLogSink;
+
+  public IlivalidatorService() {
+    this(null);
+  }
+
+  public IlivalidatorService(IlivalidatorExternalLogSink externalLogSink) {
+    this.externalLogSink = externalLogSink;
+  }
 
   public IlivalidatorResult validate(Path path, IlivalidatorOptions options) {
     Objects.requireNonNull(path, "path");
@@ -66,7 +74,6 @@ public class IlivalidatorService {
 
   private void runIlivalidator(Path path, IlivalidatorOptions options, IlivalidatorResultBuilder out) {
     Settings settings = new Settings();
-    settings.setValue(Validator.SETTING_DISABLE_STD_LOGGER, Validator.TRUE);
 
     if (options.getRepositoryUrls().isEmpty()) {
       settings.setValue(Validator.SETTING_ILIDIRS, DEFAULT_ILIDIRS);
@@ -97,12 +104,14 @@ public class IlivalidatorService {
     }
 
     EhiLogger logger = EhiLogger.getInstance();
-    StdListener stdListener = StdListener.getInstance();
+    LogListener externalLogListener = createExternalLogListener();
     CollectingLogListener logListener = new CollectingLogListener(out);
 
     synchronized (VALIDATOR_LOCK) {
       logger.addListener(logListener);
-      logger.removeListener(stdListener);
+      if (externalLogListener != null) {
+        logger.addListener(externalLogListener);
+      }
 
       try {
         boolean validatorResult = Validator.runValidation(new String[] {path.toString()}, settings);
@@ -120,10 +129,26 @@ public class IlivalidatorService {
             null,
             null);
       } finally {
-        logger.addListener(stdListener);
+        if (externalLogListener != null) {
+          logger.removeListener(externalLogListener);
+        }
         logger.removeListener(logListener);
       }
     }
+  }
+
+  private LogListener createExternalLogListener() {
+    if (externalLogSink == null) {
+      return null;
+    }
+    return event -> {
+      if (event == null) {
+        return;
+      }
+      IlivalidatorExternalLogLevel level = toExternalLevel(event.getEventKind());
+      String message = formatMessage(level, event.getEventMsg());
+      externalLogSink.log(level, message, event.getException());
+    };
   }
 
   private void parseSecure(Path path)
@@ -169,6 +194,42 @@ public class IlivalidatorService {
       return IlivalidatorIssue.Severity.INFO;
     }
     return IlivalidatorIssue.Severity.INFO;
+  }
+
+  private static IlivalidatorExternalLogLevel toExternalLevel(int eventKind) {
+    if (eventKind == LogEvent.ERROR || eventKind == IoxLogEvent.ERROR) {
+      return IlivalidatorExternalLogLevel.ERROR;
+    }
+    if (eventKind == LogEvent.ADAPTION || eventKind == IoxLogEvent.WARNING) {
+      return IlivalidatorExternalLogLevel.WARN;
+    }
+    if (eventKind == IoxLogEvent.DETAIL_INFO
+        || eventKind == LogEvent.DEBUG_TRACE
+        || eventKind == LogEvent.STATE_TRACE
+        || eventKind == LogEvent.UNUSUAL_STATE_TRACE
+        || eventKind == LogEvent.BACKEND_CMD) {
+      return IlivalidatorExternalLogLevel.DEBUG;
+    }
+    return IlivalidatorExternalLogLevel.INFO;
+  }
+
+  private static String formatMessage(IlivalidatorExternalLogLevel level, String eventMessage) {
+    String prefix =
+        switch (level) {
+          case ERROR -> "Error";
+          case WARN -> "Warning";
+          case INFO -> "Info";
+          case DEBUG -> "Debug";
+        };
+
+    if (eventMessage == null || eventMessage.isBlank()) {
+      return prefix;
+    }
+    String trimmed = eventMessage.trim();
+    if (trimmed.startsWith(prefix + ":")) {
+      return trimmed;
+    }
+    return prefix + ": " + trimmed;
   }
 
   static void addValidationFailureIssueIfNeeded(
