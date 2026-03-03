@@ -12,8 +12,8 @@ if [[ -z "${HOP_HOME}" ]]; then
   exit 1
 fi
 
-ACTION_ZIP="${ROOT_DIR}/assemblies/assemblies-action-ilivalidator/target/assemblies-action-ilivalidator-${VERSION}.zip"
-TRANSFORM_ZIP="${ROOT_DIR}/assemblies/assemblies-transform-ilivalidator/target/assemblies-transform-ilivalidator-${VERSION}.zip"
+ACTION_ZIP="${ROOT_DIR}/assemblies/assemblies-action-ilivalidator/target/hop-action-ilivalidator-${VERSION}.zip"
+TRANSFORM_ZIP="${ROOT_DIR}/assemblies/assemblies-transform-ilivalidator/target/hop-transform-ilivalidator-${VERSION}.zip"
 
 if [[ ! -f "${ACTION_ZIP}" || ! -f "${TRANSFORM_ZIP}" ]]; then
   echo "Assembly ZIPs not found."

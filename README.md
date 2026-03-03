@@ -51,8 +51,8 @@ mvn -pl assemblies/assemblies-action-ilivalidator,assemblies/assemblies-transfor
 2. Extract into your Hop home:
 
 ```bash
-unzip -o ./assemblies/assemblies-action-ilivalidator/target/assemblies-action-ilivalidator-0.1.0-SNAPSHOT.zip -d "$HOP_HOME"
-unzip -o ./assemblies/assemblies-transform-ilivalidator/target/assemblies-transform-ilivalidator-0.1.0-SNAPSHOT.zip -d "$HOP_HOME"
+unzip -o ./assemblies/assemblies-action-ilivalidator/target/hop-action-ilivalidator-0.1.0-SNAPSHOT.zip -d "$HOP_HOME"
+unzip -o ./assemblies/assemblies-transform-ilivalidator/target/hop-transform-ilivalidator-0.1.0-SNAPSHOT.zip -d "$HOP_HOME"
 ```
 
 3. Resulting plugin folders:
@@ -66,6 +66,39 @@ unzip -o ./assemblies/assemblies-transform-ilivalidator/target/assemblies-transf
 ```
 
 This script expects the assembly ZIPs from Option A to exist and then unpacks both ZIPs into `$HOP_HOME`.
+
+## Shell scripts
+
+### `scripts/dev-sync-hop-plugin.sh`
+
+Builds plugin + assembly modules and syncs install ZIPs directly into `HOP_HOME`.
+
+```bash
+./scripts/dev-sync-hop-plugin.sh "$HOP_HOME"           # default target: suite
+./scripts/dev-sync-hop-plugin.sh "$HOP_HOME" action
+./scripts/dev-sync-hop-plugin.sh "$HOP_HOME" transform
+```
+
+Behavior:
+- `suite` builds and installs both plugins
+- `action` installs only `plugins/actions/ilivalidator`
+- `transform` installs only `plugins/transforms/ilivalidator`
+- target plugin folders are removed before unzip to avoid stale files
+
+### `scripts/install-to-hop-home.sh`
+
+Unpacks already-built assembly ZIPs into `HOP_HOME` (no Maven build step).
+
+```bash
+./scripts/install-to-hop-home.sh "$HOP_HOME"
+```
+
+### `scripts/dev-sync-debug.sh`
+
+Optimized debug loop for the local debug Hop layout (`./assemblies/debug/target/hop` by default):
+- builds `ilivalidator-core` + action/transform plugin jars
+- removes known old jar patterns in debug plugin folders
+- copies fresh plugin jars into debug Hop
 
 ## Debug layout
 
