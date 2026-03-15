@@ -8,16 +8,22 @@ public final class IlivalidatorOptions {
 
   private final List<String> modelNames;
   private final List<String> repositoryUrls;
+  private final List<IlivalidatorOptionEntry> optionEntries;
   private final boolean runIlivalidator;
   private final boolean allObjectsAccessible;
+  private final String configFile;
+  private final String metaConfigFile;
   private final String logDirectory;
   private final boolean logFileTimestamp;
 
   private IlivalidatorOptions(Builder builder) {
     this.modelNames = Collections.unmodifiableList(new ArrayList<>(builder.modelNames));
     this.repositoryUrls = Collections.unmodifiableList(new ArrayList<>(builder.repositoryUrls));
+    this.optionEntries = Collections.unmodifiableList(new ArrayList<>(builder.optionEntries));
     this.runIlivalidator = builder.runIlivalidator;
     this.allObjectsAccessible = builder.allObjectsAccessible;
+    this.configFile = builder.configFile;
+    this.metaConfigFile = builder.metaConfigFile;
     this.logDirectory = builder.logDirectory;
     this.logFileTimestamp = builder.logFileTimestamp;
   }
@@ -46,6 +52,18 @@ public final class IlivalidatorOptions {
     return allObjectsAccessible;
   }
 
+  public String getConfigFile() {
+    return configFile;
+  }
+
+  public String getMetaConfigFile() {
+    return metaConfigFile;
+  }
+
+  public List<IlivalidatorOptionEntry> getOptionEntries() {
+    return optionEntries;
+  }
+
   public String getLogDirectory() {
     return logDirectory;
   }
@@ -58,8 +76,11 @@ public final class IlivalidatorOptions {
 
     private final List<String> modelNames = new ArrayList<>();
     private final List<String> repositoryUrls = new ArrayList<>();
+    private final List<IlivalidatorOptionEntry> optionEntries = new ArrayList<>();
     private boolean runIlivalidator = true;
     private boolean allObjectsAccessible;
+    private String configFile;
+    private String metaConfigFile;
     private String logDirectory;
     private boolean logFileTimestamp;
 
@@ -94,6 +115,27 @@ public final class IlivalidatorOptions {
 
     public Builder allObjectsAccessible(boolean allObjectsAccessible) {
       this.allObjectsAccessible = allObjectsAccessible;
+      return this;
+    }
+
+    public Builder configFile(String configFile) {
+      this.configFile = configFile;
+      return this;
+    }
+
+    public Builder metaConfigFile(String metaConfigFile) {
+      this.metaConfigFile = metaConfigFile;
+      return this;
+    }
+
+    public Builder optionEntries(List<IlivalidatorOptionEntry> optionEntries) {
+      this.optionEntries.clear();
+      if (optionEntries != null) {
+        optionEntries.stream()
+            .filter(entry -> entry != null && entry.getKey() != null && !entry.getKey().isBlank())
+            .map(entry -> new IlivalidatorOptionEntry(entry.getKey(), entry.isEnabled(), entry.getValue()))
+            .forEach(this.optionEntries::add);
+      }
       return this;
     }
 

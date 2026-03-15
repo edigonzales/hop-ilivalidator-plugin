@@ -2,15 +2,19 @@ package ch.so.agi.ilivalidator.core.validator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ch.ehi.basics.logging.LogEvent;
+import ch.ehi.basics.settings.Settings;
 import ch.interlis.iox.IoxLogEvent;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Date;
 import org.junit.jupiter.api.Test;
+import org.interlis2.validator.Validator;
 
 class IlivalidatorServiceTest {
 
@@ -116,6 +120,67 @@ class IlivalidatorServiceTest {
     assertFalse(result.isValid());
     assertEquals(1, result.getIssues().size());
     assertEquals("ILI_EVENT", result.getIssues().get(0).getCode());
+  }
+
+  @Test
+  void shouldCreateValidatorSettingsWithOptionOverrides() {
+    IlivalidatorOptions options =
+        IlivalidatorOptions.builder()
+            .modelNames(List.of("DefaultModel"))
+            .repositoryUrls(List.of("https://models.example.org"))
+            .configFile("config/default.ini")
+            .metaConfigFile("meta/default.ini")
+            .allObjectsAccessible(true)
+            .logDirectory("logs")
+            .optionEntries(
+                List.of(
+                    new IlivalidatorOptionEntry("models", true, "OverrideModel"),
+                    new IlivalidatorOptionEntry("modeldir", true, "ilidata:ch.so.agi.models"),
+                    new IlivalidatorOptionEntry("config", true, "ilidata:ch.so.agi.config"),
+                    new IlivalidatorOptionEntry("metaConfig", true, "ilidata:ch.so.agi.meta"),
+                    new IlivalidatorOptionEntry("allObjectsAccessible", true, "false"),
+                    new IlivalidatorOptionEntry("log", true, "logs/override.log")))
+            .build();
+
+    IlivalidatorResultBuilder out = new IlivalidatorResultBuilder("dataset.xtf");
+    Settings settings = IlivalidatorService.createValidatorSettings(Path.of("dataset.xtf"), options, out);
+
+    assertEquals("OverrideModel", settings.getValue(Validator.SETTING_MODELNAMES));
+    assertEquals("ilidata:ch.so.agi.models", settings.getValue(Validator.SETTING_ILIDIRS));
+    assertEquals("ilidata:ch.so.agi.config", settings.getValue(Validator.SETTING_CONFIGFILE));
+    assertEquals("ilidata:ch.so.agi.meta", settings.getValue(Validator.SETTING_META_CONFIGFILE));
+    assertEquals("false", settings.getValue(Validator.SETTING_ALL_OBJECTS_ACCESSIBLE));
+    assertEquals("logs/override.log", settings.getValue(Validator.SETTING_LOGFILE));
+    assertEquals("logs/override.log", out.build().getLogFilePath());
+  }
+
+  @Test
+  void shouldKeepIliDataConfigValuesUntouched() {
+    IlivalidatorOptions options =
+        IlivalidatorOptions.builder()
+            .configFile("ilidata:ch.so.agi.validation")
+            .metaConfigFile("ilidata:ch.so.agi.meta")
+            .build();
+
+    IlivalidatorResultBuilder out = new IlivalidatorResultBuilder("dataset.xtf");
+    Settings settings = IlivalidatorService.createValidatorSettings(Path.of("dataset.xtf"), options, out);
+
+    assertEquals("ilidata:ch.so.agi.validation", settings.getValue(Validator.SETTING_CONFIGFILE));
+    assertEquals("ilidata:ch.so.agi.meta", settings.getValue(Validator.SETTING_META_CONFIGFILE));
+  }
+
+  @Test
+  void shouldRejectInvalidIntegerOptionValues() {
+    Settings settings = new Settings();
+
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                IlivalidatorOptionApplier.apply(
+                    settings, List.of(new IlivalidatorOptionEntry("proxyPort", true, "abc"))));
+
+    assertTrue(exception.getMessage().contains("proxyPort"));
   }
 
   private static class TestLogEvent implements LogEvent {

@@ -73,35 +73,7 @@ public class IlivalidatorService {
   }
 
   private void runIlivalidator(Path path, IlivalidatorOptions options, IlivalidatorResultBuilder out) {
-    Settings settings = new Settings();
-
-    if (options.getRepositoryUrls().isEmpty()) {
-      settings.setValue(Validator.SETTING_ILIDIRS, DEFAULT_ILIDIRS);
-    } else {
-      settings.setValue(
-          Validator.SETTING_ILIDIRS,
-          options.getRepositoryUrls().stream().collect(Collectors.joining(";")));
-    }
-
-    if (!options.getModelNames().isEmpty()) {
-      settings.setValue(
-          Validator.SETTING_MODELNAMES,
-          options.getModelNames().stream().collect(Collectors.joining(";")));
-    }
-
-    if (options.isAllObjectsAccessible()) {
-      settings.setValue(Validator.SETTING_ALL_OBJECTS_ACCESSIBLE, Validator.TRUE);
-    }
-
-    if (options.getLogDirectory() != null && !options.getLogDirectory().isBlank()) {
-      java.nio.file.Path logDir = java.nio.file.Path.of(options.getLogDirectory());
-      java.nio.file.Path logFile = logDir.resolve(path.getFileName() + ".log");
-      settings.setValue(Validator.SETTING_LOGFILE, logFile.toString());
-      if (options.isLogFileTimestamp()) {
-        settings.setValue(Validator.SETTING_LOGFILE_TIMESTAMP, Validator.TRUE);
-      }
-      out.setLogFilePath(logFile.toString());
-    }
+    Settings settings = createValidatorSettings(path, options, out);
 
     EhiLogger logger = EhiLogger.getInstance();
     LogListener externalLogListener = createExternalLogListener();
@@ -135,6 +107,58 @@ public class IlivalidatorService {
         logger.removeListener(logListener);
       }
     }
+  }
+
+  static Settings createValidatorSettings(
+      Path path, IlivalidatorOptions options, IlivalidatorResultBuilder out) {
+    Settings settings = new Settings();
+
+    if (options.getRepositoryUrls().isEmpty()) {
+      settings.setValue(Validator.SETTING_ILIDIRS, DEFAULT_ILIDIRS);
+    } else {
+      settings.setValue(
+          Validator.SETTING_ILIDIRS,
+          options.getRepositoryUrls().stream().collect(Collectors.joining(";")));
+    }
+
+    if (!options.getModelNames().isEmpty()) {
+      settings.setValue(
+          Validator.SETTING_MODELNAMES,
+          options.getModelNames().stream().collect(Collectors.joining(";")));
+    }
+
+    if (options.isAllObjectsAccessible()) {
+      settings.setValue(Validator.SETTING_ALL_OBJECTS_ACCESSIBLE, Validator.TRUE);
+    }
+
+    if (options.getConfigFile() != null && !options.getConfigFile().isBlank()) {
+      settings.setValue(Validator.SETTING_CONFIGFILE, options.getConfigFile());
+    }
+
+    if (options.getMetaConfigFile() != null && !options.getMetaConfigFile().isBlank()) {
+      settings.setValue(Validator.SETTING_META_CONFIGFILE, options.getMetaConfigFile());
+    }
+
+    if (options.getLogDirectory() != null && !options.getLogDirectory().isBlank()) {
+      java.nio.file.Path logDir = java.nio.file.Path.of(options.getLogDirectory());
+      java.nio.file.Path logFile = logDir.resolve(path.getFileName() + ".log");
+      settings.setValue(Validator.SETTING_LOGFILE, logFile.toString());
+      if (options.isLogFileTimestamp()) {
+        settings.setValue(Validator.SETTING_LOGFILE_TIMESTAMP, Validator.TRUE);
+      }
+    }
+
+    IlivalidatorOptionApplier.apply(settings, options.getOptionEntries());
+
+    String effectiveLogFilePath = settings.getValue(Validator.SETTING_LOGFILE);
+    if (out != null) {
+      out.setLogFilePath(
+          effectiveLogFilePath == null || effectiveLogFilePath.isBlank()
+              ? null
+              : effectiveLogFilePath);
+    }
+
+    return settings;
   }
 
   private LogListener createExternalLogListener() {

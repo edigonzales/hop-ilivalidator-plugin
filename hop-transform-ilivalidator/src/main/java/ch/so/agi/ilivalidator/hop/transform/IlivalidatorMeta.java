@@ -1,5 +1,7 @@
 package ch.so.agi.ilivalidator.hop.transform;
 
+import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptionCodec;
+import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptionEntry;
 import java.util.List;
 import org.apache.hop.core.CheckResult;
 import org.apache.hop.core.ICheckResult;
@@ -34,6 +36,13 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
 
   @HopMetadataProperty private String modelNames;
   @HopMetadataProperty private String repositoryUrls;
+  @HopMetadataProperty private String configMode = "STATIC";
+  @HopMetadataProperty private String configValue;
+  @HopMetadataProperty private String configField;
+  @HopMetadataProperty private String metaConfigMode = "STATIC";
+  @HopMetadataProperty private String metaConfigValue;
+  @HopMetadataProperty private String metaConfigField;
+  @HopMetadataProperty private String serializedOptions;
   @HopMetadataProperty private boolean allObjectsAccessible;
 
   @HopMetadataProperty private boolean failPipelineOnInvalid;
@@ -52,6 +61,13 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
     staticFilePath = "";
     modelNames = "";
     repositoryUrls = "";
+    configMode = "STATIC";
+    configValue = "";
+    configField = "";
+    metaConfigMode = "STATIC";
+    metaConfigValue = "";
+    metaConfigField = "";
+    serializedOptions = "";
     allObjectsAccessible = false;
     failPipelineOnInvalid = false;
     outputIsValidField = "is_valid";
@@ -72,7 +88,7 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
       throws HopTransformException {
     rowMeta.addValueMeta(new ValueMetaBoolean(resolveFieldName(outputIsValidField)));
     rowMeta.addValueMeta(new ValueMetaString(resolveFieldName(outputValidationMessageField)));
-    if (logDirectory != null && !logDirectory.isBlank()) {
+    if (shouldAddLogFilePathField()) {
       rowMeta.addValueMeta(new ValueMetaString(resolveFieldName(outputLogFilePathField)));
     }
   }
@@ -106,6 +122,22 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
           new CheckResult(
               ICheckResult.TYPE_RESULT_ERROR,
               BaseMessages.getString(PKG, "IlivalidatorMeta.CheckResult.StaticPathMissing"),
+              transformMeta));
+    }
+
+    if (isFieldMode(configMode) && (configField == null || configField.isBlank())) {
+      remarks.add(
+          new CheckResult(
+              ICheckResult.TYPE_RESULT_ERROR,
+              BaseMessages.getString(PKG, "IlivalidatorMeta.CheckResult.ConfigFieldMissing"),
+              transformMeta));
+    }
+
+    if (isFieldMode(metaConfigMode) && (metaConfigField == null || metaConfigField.isBlank())) {
+      remarks.add(
+          new CheckResult(
+              ICheckResult.TYPE_RESULT_ERROR,
+              BaseMessages.getString(PKG, "IlivalidatorMeta.CheckResult.MetaConfigFieldMissing"),
               transformMeta));
     }
 
@@ -156,6 +188,62 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
 
   public void setRepositoryUrls(String repositoryUrls) {
     this.repositoryUrls = repositoryUrls;
+  }
+
+  public String getConfigMode() {
+    return configMode;
+  }
+
+  public void setConfigMode(String configMode) {
+    this.configMode = configMode;
+  }
+
+  public String getConfigValue() {
+    return configValue;
+  }
+
+  public void setConfigValue(String configValue) {
+    this.configValue = configValue;
+  }
+
+  public String getConfigField() {
+    return configField;
+  }
+
+  public void setConfigField(String configField) {
+    this.configField = configField;
+  }
+
+  public String getMetaConfigMode() {
+    return metaConfigMode;
+  }
+
+  public void setMetaConfigMode(String metaConfigMode) {
+    this.metaConfigMode = metaConfigMode;
+  }
+
+  public String getMetaConfigValue() {
+    return metaConfigValue;
+  }
+
+  public void setMetaConfigValue(String metaConfigValue) {
+    this.metaConfigValue = metaConfigValue;
+  }
+
+  public String getMetaConfigField() {
+    return metaConfigField;
+  }
+
+  public void setMetaConfigField(String metaConfigField) {
+    this.metaConfigField = metaConfigField;
+  }
+
+  public String getSerializedOptions() {
+    return serializedOptions;
+  }
+
+  public void setSerializedOptions(String serializedOptions) {
+    this.serializedOptions = serializedOptions;
   }
 
   public boolean isAllObjectsAccessible() {
@@ -212,5 +300,24 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
 
   public void setLogFileTimestamp(boolean logFileTimestamp) {
     this.logFileTimestamp = logFileTimestamp;
+  }
+
+  private boolean shouldAddLogFilePathField() {
+    if (logDirectory != null && !logDirectory.isBlank()) {
+      return true;
+    }
+    for (IlivalidatorOptionEntry entry : IlivalidatorOptionCodec.decode(serializedOptions)) {
+      if (entry == null || !entry.isEnabled() || entry.getKey() == null) {
+        continue;
+      }
+      if ("log".equalsIgnoreCase(entry.getKey().trim())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isFieldMode(String mode) {
+    return "FIELD".equalsIgnoreCase(mode);
   }
 }
