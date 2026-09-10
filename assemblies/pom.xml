@@ -17,6 +17,7 @@
   <modules>
     <module>assemblies-action-ilivalidator</module>
     <module>assemblies-transform-ilivalidator</module>
-    <module>debug</module>
+
   </modules>
+  <profiles><profile><id>debug</id><modules><module>debug</module></modules></profile></profiles>
 </project>

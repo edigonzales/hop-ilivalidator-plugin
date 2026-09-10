@@ -50,10 +50,7 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
   private final IlivalidatorMeta input;
 
-  private Button wUseFilePathField;
-  private ComboVar wFilePathField;
-  private TextVar wStaticFilePath;
-  private Button wbStaticFilePath;
+  private TransferFileInput transferFileInput;
 
   private TextVar wModelNames;
   private TextVar wRepositoryUrls;
@@ -174,42 +171,11 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     layout.marginHeight = PropsUi.getFormMargin();
     inputComposite.setLayout(layout);
 
-    Control lastControl = null;
-
-    wUseFilePathField = new Button(inputComposite, SWT.CHECK);
-    placeControl(
-        inputComposite,
-        BaseMessages.getString(PKG, "IlivalidatorDialog.UseFilePathField.Label"),
-        wUseFilePathField,
-        lastControl);
-    wUseFilePathField.addListener(
-        SWT.Selection,
-        e -> {
-          input.setChanged();
-          enableDisableControls();
-        });
-    lastControl = wUseFilePathField;
-
-    wFilePathField = new ComboVar(variables, inputComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    wFilePathField.addModifyListener(e -> input.setChanged());
-    placeControl(
-        inputComposite,
-        BaseMessages.getString(PKG, "IlivalidatorDialog.FilePathField.Label"),
-        wFilePathField,
-        lastControl);
-    BaseTransformDialog.getFieldsFromPrevious(variables, wFilePathField, pipelineMeta, transformMeta);
-    lastControl = wFilePathField;
-
-    wStaticFilePath = new TextVar(variables, inputComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    wStaticFilePath.addModifyListener(e -> input.setChanged());
-    wbStaticFilePath = new Button(inputComposite, SWT.PUSH | SWT.CENTER);
-    placeControlWithBrowse(
-        inputComposite,
-        BaseMessages.getString(PKG, "IlivalidatorDialog.StaticFilePath.Label"),
-        wStaticFilePath,
-        lastControl,
-        wbStaticFilePath,
-        e -> browseFile(wStaticFilePath));
+    transferFileInput = new TransferFileInput(inputComposite, variables, props.getMiddlePct(),
+        () -> {
+          var fields = pipelineMeta.getPrevTransformFields(variables, transformMeta);
+          return fields == null ? new String[0] : fields.getFieldNames();
+        }, new LocalTransferFileBrowser(), () -> input.setChanged());
 
     inputTab.setControl(inputComposite);
   }
@@ -279,7 +245,7 @@ public class IlivalidatorDialog extends BaseTransformDialog {
         BaseMessages.getString(PKG, "IlivalidatorDialog.ConfigField.Label"),
         wConfigField,
         lastControl);
-    BaseTransformDialog.getFieldsFromPrevious(variables, wConfigField, pipelineMeta, transformMeta);
+    loadOptionalFieldSuggestions(wConfigField);
     lastControl = wConfigField;
 
     wMetaConfigMode = new ComboVar(variables, validationComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
@@ -316,7 +282,7 @@ public class IlivalidatorDialog extends BaseTransformDialog {
         BaseMessages.getString(PKG, "IlivalidatorDialog.MetaConfigField.Label"),
         wMetaConfigField,
         lastControl);
-    BaseTransformDialog.getFieldsFromPrevious(variables, wMetaConfigField, pipelineMeta, transformMeta);
+    loadOptionalFieldSuggestions(wMetaConfigField);
     lastControl = wMetaConfigField;
 
     wAllObjectsAccessible = new Button(validationComposite, SWT.CHECK);
@@ -545,12 +511,19 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     }
   }
 
-  private void enableDisableControls() {
-    boolean useField = wUseFilePathField.getSelection();
-    wFilePathField.setEnabled(useField);
-    wStaticFilePath.setEnabled(!useField);
-    wbStaticFilePath.setEnabled(!useField);
+  private void loadOptionalFieldSuggestions(ComboVar combo) {
+    // Optional suggestions must not prevent the transfer input's status from being shown.
+    String text = combo.getText();
+    try {
+      var fields = pipelineMeta.getPrevTransformFields(variables, transformMeta);
+      combo.setItems(fields == null ? new String[0] : fields.getFieldNames());
+      combo.setText(text);
+    } catch (Exception e) {
+      log.logDebug("Unable to load optional configuration field suggestions", e);
+    }
+  }
 
+  private void enableDisableControls() {
     boolean configFromField = "FIELD".equalsIgnoreCase(wConfigMode.getText());
     wConfigValue.setEnabled(!configFromField);
     wbConfigValue.setEnabled(!configFromField);
@@ -565,9 +538,7 @@ public class IlivalidatorDialog extends BaseTransformDialog {
   private void getData() {
     wTransformName.setText(transformName == null ? "" : transformName);
 
-    wUseFilePathField.setSelection(input.isUseFilePathField());
-    wFilePathField.setText(input.getFilePathField() == null ? "" : input.getFilePathField());
-    wStaticFilePath.setText(input.getStaticFilePath() == null ? "" : input.getStaticFilePath());
+    transferFileInput.load(input);
 
     wModelNames.setText(input.getModelNames() == null ? "" : input.getModelNames());
     wRepositoryUrls.setText(input.getRepositoryUrls() == null ? "" : input.getRepositoryUrls());
@@ -666,6 +637,12 @@ public class IlivalidatorDialog extends BaseTransformDialog {
           event.doit = false;
           cancel();
         });
+    shell.addListener(SWT.Traverse, event -> {
+      if (event.detail == SWT.TRAVERSE_ESCAPE) {
+        event.doit = false;
+        cancel();
+      }
+    });
     BaseDialog.addDefaultListeners(shell, c -> ok());
     BaseDialog.addSpacesOnTabs(shell);
 
@@ -740,9 +717,7 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
     transformName = wTransformName.getText();
 
-    input.setUseFilePathField(wUseFilePathField.getSelection());
-    input.setFilePathField(wFilePathField.getText());
-    input.setStaticFilePath(wStaticFilePath.getText());
+    transferFileInput.applyTo(input);
 
     input.setModelNames(wModelNames.getText());
     input.setRepositoryUrls(wRepositoryUrls.getText());

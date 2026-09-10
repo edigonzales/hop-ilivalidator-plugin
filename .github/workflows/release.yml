@@ -4,15 +4,21 @@ on:
   push:
     branches:
       - "main"
+  pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: ilivalidator-release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
-    name: Build release ZIPs
-    runs-on: ubuntu-latest
+    name: Verify and build plugin ZIPs
+    if: github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
     outputs:
       version: ${{ steps.meta.outputs.version }}
 
@@ -20,16 +26,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Set up Java 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "21"
 
       - name: Build plugin ZIPs
         shell: bash
-        run: mvn -U -B -ntp -DskipTests -pl assemblies/assemblies-action-ilivalidator,assemblies/assemblies-transform-ilivalidator -am package
+        run: xvfb-run -a mvn -U -B -ntp clean verify
 
+      - name: Verify ZIP contents and Commons snapshots
+        run: python3 scripts/verify-packages.py
+
+      - name: Test installed plugins in Hop 2.19
+        run: python3 scripts/run-e2e.py
+
+      - name: Upload verification diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-diagnostics
+          path: |
+            **/target/surefire-reports/
+            target/e2e/*.log
+            target/e2e/*.csv
       - name: Resolve release metadata
         id: meta
         shell: bash
@@ -98,13 +119,23 @@ jobs:
           path: |
             ${{ steps.assets.outputs.action_zip }}
             ${{ steps.assets.outputs.transform_zip }}
+            target/package-verification.json
+            target/e2e/results.json
 
   release:
     name: Create release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    permissions:
+      contents: write
 
     steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
       - name: Download ZIP artifacts
         uses: actions/download-artifact@v4
         with:
@@ -153,3 +184,22 @@ jobs:
           prerelease: false
           generate_release_notes: true
           files: release-assets/*.zip
+
+      - name: Verify downloaded release ZIPs and rerun pipelines
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          gh release download "$RELEASE_TAG" --dir downloaded --pattern '*.zip'
+          for archive in release-assets/*.zip; do
+            cmp "$archive" "downloaded/$(basename "$archive")"
+          done
+          python3 scripts/verify-packages.py --action downloaded/hop-action-ilivalidator-${{ needs.build.outputs.version }}.zip --transform downloaded/hop-transform-ilivalidator-${{ needs.build.outputs.version }}.zip
+          python3 scripts/run-e2e.py --action downloaded/hop-action-ilivalidator-${{ needs.build.outputs.version }}.zip --transform downloaded/hop-transform-ilivalidator-${{ needs.build.outputs.version }}.zip
+      - name: Upload release verification
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-verification
+          path: |
+            target/package-verification.json
+            target/e2e/results.json

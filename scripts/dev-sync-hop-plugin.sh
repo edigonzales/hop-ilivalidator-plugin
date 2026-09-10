@@ -63,7 +63,8 @@ esac
 
 (
   cd "${ROOT_DIR}"
-  mvn -pl "${BUILD_MODULES}" -am -DskipTests package
+  source "${SCRIPT_DIR}/lib-java.sh"
+  mvn -U -pl "${BUILD_MODULES}" -am verify
 )
 
 mkdir -p "${HOP_HOME}"

@@ -22,12 +22,10 @@ class IlivalidatorDialogTest {
   void shouldHaveBrowseButtonFields() throws Exception {
     Class<?> clazz = IlivalidatorDialog.class;
 
-    Field wbStaticFilePath = clazz.getDeclaredField("wbStaticFilePath");
     Field wbConfigValue = clazz.getDeclaredField("wbConfigValue");
     Field wbMetaConfigValue = clazz.getDeclaredField("wbMetaConfigValue");
     Field wbLogDirectory = clazz.getDeclaredField("wbLogDirectory");
 
-    assertNotNull(wbStaticFilePath);
     assertNotNull(wbConfigValue);
     assertNotNull(wbMetaConfigValue);
     assertNotNull(wbLogDirectory);
@@ -37,7 +35,6 @@ class IlivalidatorDialogTest {
   void shouldHaveValidationConfigAndOptionsWidgets() throws Exception {
     Class<?> clazz = IlivalidatorDialog.class;
 
-    Field wStaticFilePath = clazz.getDeclaredField("wStaticFilePath");
     Field wConfigMode = clazz.getDeclaredField("wConfigMode");
     Field wConfigValue = clazz.getDeclaredField("wConfigValue");
     Field wConfigField = clazz.getDeclaredField("wConfigField");
@@ -47,7 +44,6 @@ class IlivalidatorDialogTest {
     Field wLogDirectory = clazz.getDeclaredField("wLogDirectory");
     Field wOptions = clazz.getDeclaredField("wOptions");
 
-    assertNotNull(wStaticFilePath);
     assertNotNull(wConfigMode);
     assertNotNull(wConfigValue);
     assertNotNull(wConfigField);

@@ -15,6 +15,24 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.eclipse.platform</groupId>
+      <artifactId>${swt.artifactId}</artifactId>
+      <version>${swt.version}</version>
+      <scope>provided</scope>
+      <exclusions><exclusion><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.swt</artifactId></exclusion></exclusions>
+    </dependency>
+    <dependency>
+      <groupId>ch.so.agi</groupId><artifactId>hop-plugin-commons-ui</artifactId><version>${commons.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.hop</groupId><artifactId>hop-ui-rcp</artifactId><version>${hop.version}</version><scope>test</scope>
+      <exclusions>
+        <exclusion><groupId>org.eclipse</groupId><artifactId>org.eclipse.tm4e.core</artifactId></exclusion>
+        <exclusion><groupId>org.eclipse.platform</groupId><artifactId>org.eclipse.swt</artifactId></exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
       <groupId>ch.so.agi.ilivalidator</groupId>
       <artifactId>ilivalidator-core</artifactId>
       <version>${project.version}</version>
@@ -86,9 +104,12 @@
                   <exclude>org.apache.hop:hop-engine</exclude>
                   <exclude>org.apache.hop:hop-ui</exclude>
                   <exclude>org.junit.jupiter:junit-jupiter</exclude>
-                  <exclude>antlr:antlr</exclude>
+                  <exclude>ch.so.agi:hop-plugin-commons-*</exclude>
                 </excludes>
               </artifactSet>
+              <relocations>
+                <relocation><pattern>antlr</pattern><shadedPattern>ch.so.agi.ilivalidator.shaded.antlr</shadedPattern></relocation>
+              </relocations>
               <filters>
                 <filter>
                   <artifact>*:*</artifact>

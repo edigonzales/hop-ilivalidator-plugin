@@ -1,6 +1,6 @@
 # hop-ilivalidator-plugin
 
-Apache Hop 2.17 plugin suite for INTERLIS validation.
+Apache Hop 2.19 plugin suite for INTERLIS validation.
 
 ## Modules
 
@@ -33,7 +33,7 @@ mvn -pl ilivalidator-core,hop-action-ilivalidator,hop-transform-ilivalidator -am
 
 Build prerequisites:
 
-- Java 17 compatible toolchain (`maven.compiler.release=17`)
+- Java 21 compatible toolchain (`maven.compiler.release=21`)
 - Access to:
   - Maven Central for Apache Hop artifacts
   - `https://jars.interlis.ch/` for `ch.interlis:ilivalidator:1.15.0`
@@ -115,7 +115,7 @@ Useful properties:
 Build debug layout once:
 
 ```bash
-mvn -pl assemblies/debug -am -DskipTests package
+mvn -Pdebug -pl assemblies/debug -am -DskipTests package
 ```
 
 Start Hop GUI from debug layout:
@@ -179,9 +179,8 @@ For the shortest feedback loop:
 
 Cause: classloader conflict between Hop core libraries and plugin-bundled ANTLR classes.
 
-Current fix in this project:
-- plugin jars exclude `antlr:antlr`
-- Hop core ANTLR (`/lib/core/org.apache.servicemix.bundles.antlr-2.7.7_5.jar`) is used consistently
+For Hop 2.19 both plugin JARs relocate ANTLR to a private package. They no longer
+rely on an ANTLR JAR being present in the Hop installation.
 
 ### Compiler/model resolution errors should fail the transform
 
@@ -204,3 +203,63 @@ Technical ilivalidator failures (for example `compiler failed`, unsupported INTE
    - Verify output fields:
      - `is_valid`
      - `validation_message`
+
+## Transfer file: configured value or incoming field
+
+The transform's Input tab uses `ValueOrFieldControl` from Hop Plugin Commons.
+Choose **Value / Variable** for a local file path (including `${VARIABLE}` expressions),
+or **Input field** for a column from the preceding transform. The editable list loads
+upstream metadata on first use; Refresh reloads it. Missing metadata never removes
+a manually entered field name. Errors appear below the input without moving its label.
+
+Both the configured path and field name survive mode changes and reopening the dialog.
+They map to the existing `staticFilePath`, `filePathField`, and `useFilePathField`
+properties. Only OK commits changes; Cancel, Escape, and window close discard them.
+Existing `.hpl` files need no migration. Runtime interpretation is unchanged, including
+the existing variable resolution of incoming paths.
+
+Browse uses the native local-file picker because the validator accepts local paths.
+Variables are resolved only to preselect a location; cancelling preserves the original
+expression. Configuration, metaconfiguration, and log-directory controls are unchanged.
+
+The transform depends on `ch.so.agi:hop-plugin-commons-ui:0.1.0-SNAPSHOT` from
+`https://jars.interlis.guru/snapshots/`. Its ZIP includes UI and Core as separate JARs
+in `plugins/transforms/ilivalidator/lib/`. Neither Commons nor Hop/SWT is embedded
+in the shaded transform JAR. The action does not depend on Commons.
+
+Hop 2.19 no longer supplies the ANTLR 2 classes previously used by the validator.
+Both plugin JARs therefore include ANTLR relocated to
+`ch.so.agi.ilivalidator.shaded.antlr`, avoiding collisions with host libraries.
+The INTERLIS library versions remain unchanged.
+
+## Verification and release
+
+Use Java 21 and run:
+
+```bash
+mvn -U -B -ntp clean verify
+python3 scripts/verify-packages.py
+python3 scripts/run-e2e.py
+```
+
+On headless Linux, run Maven with `xvfb-run -a`. Maven selects the native SWT 3.134.0
+artifact on Linux x86_64, Windows x86_64, and macOS ARM64/Intel, and automatically
+uses `-XstartOnFirstThread` for macOS tests. The dialog integration tests cover real
+OK/cancellation actions, upstream metadata, legacy metadata roundtrips, browse results,
+and label/status geometry. The Commons repository retains its separate OS test matrix.
+
+The E2E script downloads and checksums Hop 2.19 in `~/.cache/hop-ilivalidator`, installs
+the ZIPs into `target/e2e/hop`, and runs three pipelines: two incoming file paths, one
+configured path without input, and an invalid field name. Its INTERLIS model and data
+are local fixtures. Logs, CSV output, and results stay under `target/e2e/`.
+`target/package-verification.json` records archive checksums and the actual timestamped
+Commons versions matched against the remote repository.
+
+An optional full debug distribution is built with `mvn -Pdebug -pl assemblies/debug -am package`.
+The regular `verify` build creates only the two small plugin ZIPs. Development sync scripts
+install those ZIPs including `lib/`; restart Hop after updating them.
+
+Pull requests build and test without publishing. Pushes and manual runs on `main`
+publish both ZIPs only after verification, then download the release files, compare
+bytes, and rerun the packaged-plugin pipelines. See the Release workflow and its
+`release-verification` artifact for the exact snapshots and results.
