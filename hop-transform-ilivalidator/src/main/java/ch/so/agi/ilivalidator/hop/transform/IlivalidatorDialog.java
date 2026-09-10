@@ -659,8 +659,9 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     int y = clientArea.y + Math.max(0, (clientArea.height - height) / 2);
     shell.setLocation(x, y);
 
-    shell.open();
+    // GTK may dispatch a close event while open() is still on the stack.
     Display display = shell.getDisplay();
+    shell.open();
     while (!shell.isDisposed()) {
       if (!display.readAndDispatch()) {
         display.sleep();
