@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import ch.so.agi.ilivalidator.core.validator.IlivalidatorIssue;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptions;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorResult;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorService;
@@ -87,6 +88,79 @@ class IlivalidatorConfigModeTest {
     assertEquals(1, service.calls.size());
     assertEquals("ilidata:ch.so.agi.validation", service.calls.get(0).options().getConfigFile());
     assertEquals("ilidata:ch.so.agi.meta", service.calls.get(0).options().getMetaConfigFile());
+  }
+
+  @Test
+  void shouldFailStaticInvalidResultWhenConfiguredToFail() throws Exception {
+    IlivalidatorMeta meta = createDefaultMeta();
+    meta.setUseFilePathField(false);
+    meta.setStaticFilePath("data/static.xtf");
+    meta.setFailPipelineOnInvalid(true);
+
+    IlivalidatorIssue issue =
+        new IlivalidatorIssue(
+            "ILI_VALIDATION_ERROR", "Mandatory Name is missing", IlivalidatorIssue.Severity.ERROR, null, null);
+    CapturingService service =
+        new CapturingService(new IlivalidatorResult(false, List.of(issue), "data/static.xtf", null));
+    TestRowHandler rowHandler = new TestRowHandler();
+    Ilivalidator transform = createTransform(meta, null, rowHandler, service);
+    initializeTransform(transform);
+
+    HopTransformException exception = assertThrows(HopTransformException.class, transform::processRow);
+
+    assertTrue(exception.getMessage().contains("data/static.xtf"));
+    assertTrue(rowHandler.outputRows.isEmpty());
+    assertEquals(1, service.calls.size());
+    assertFalse(transform.processRow());
+    assertEquals(1, service.calls.size());
+  }
+
+  @Test
+  void shouldEmitStaticInvalidResultWhenFailDisabled() throws Exception {
+    IlivalidatorMeta meta = createDefaultMeta();
+    meta.setUseFilePathField(false);
+    meta.setStaticFilePath("data/static.xtf");
+    meta.setFailPipelineOnInvalid(false);
+
+    IlivalidatorIssue issue =
+        new IlivalidatorIssue(
+            "ILI_VALIDATION_ERROR", "Mandatory Name is missing", IlivalidatorIssue.Severity.ERROR, null, null);
+    CapturingService service =
+        new CapturingService(new IlivalidatorResult(false, List.of(issue), "data/static.xtf", null));
+    TestRowHandler rowHandler = new TestRowHandler();
+    Ilivalidator transform = createTransform(meta, null, rowHandler, service);
+    initializeTransform(transform);
+
+    assertTrue(transform.processRow());
+    assertFalse(transform.processRow());
+
+    assertEquals(1, service.calls.size());
+    assertEquals(1, rowHandler.outputRows.size());
+    assertEquals(Boolean.FALSE, getOutputValue(rowHandler, 0, "is_valid"));
+    assertEquals(
+        "ILI_VALIDATION_ERROR: Mandatory Name is missing",
+        getOutputValue(rowHandler, 0, "validation_message"));
+  }
+
+  @Test
+  void shouldFailStaticTechnicalResultRegardlessOfInvalidFlag() throws Exception {
+    IlivalidatorMeta meta = createDefaultMeta();
+    meta.setUseFilePathField(false);
+    meta.setStaticFilePath("data/static.xtf");
+    meta.setFailPipelineOnInvalid(false);
+
+    IlivalidatorIssue issue =
+        new IlivalidatorIssue(
+            "PARSER_ERROR", "Malformed XML", IlivalidatorIssue.Severity.ERROR, null, null);
+    CapturingService service =
+        new CapturingService(new IlivalidatorResult(false, List.of(issue), "data/static.xtf", null));
+    TestRowHandler rowHandler = new TestRowHandler();
+    Ilivalidator transform = createTransform(meta, null, rowHandler, service);
+    initializeTransform(transform);
+
+    assertThrows(HopTransformException.class, transform::processRow);
+    assertTrue(rowHandler.outputRows.isEmpty());
+    assertEquals(1, service.calls.size());
   }
 
   @Test
@@ -207,10 +281,22 @@ class IlivalidatorConfigModeTest {
 
   private static final class CapturingService extends IlivalidatorService {
     private final List<ValidationCall> calls = new ArrayList<>();
+    private final IlivalidatorResult configuredResult;
+
+    private CapturingService() {
+      this(null);
+    }
+
+    private CapturingService(IlivalidatorResult configuredResult) {
+      this.configuredResult = configuredResult;
+    }
 
     @Override
     public IlivalidatorResult validate(Path path, IlivalidatorOptions options) {
       calls.add(new ValidationCall(path, options));
+      if (configuredResult != null) {
+        return configuredResult;
+      }
       return new IlivalidatorResult(true, List.of(), path == null ? null : path.toString(), null);
     }
   }
@@ -288,5 +374,17 @@ class IlivalidatorConfigModeTest {
     public boolean isBasic() {
       return false;
     }
+
+    @Override
+    public void logBasic(String message) {}
+
+    @Override
+    public void logDetailed(String message) {}
+
+    @Override
+    public void logError(String message) {}
+
+    @Override
+    public void logError(String message, Throwable throwable) {}
   }
 }

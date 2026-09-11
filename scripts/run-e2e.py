@@ -31,10 +31,11 @@ def transform(name, kind, body, x):
     return f'<transform><name>{name}</name><type>{kind}</type><copies>1</copies><distribute>Y</distribute>{body}<GUI><xloc>{x}</xloc><yloc>160</yloc></GUI></transform>'
 
 def pipeline(work, fixtures, case):
-    configured = case == 'configured'
+    configured = case in ('configured', 'configured-invalid')
     field = 'missing_path' if case == 'missing-field' else 'file_path'
     source = '' if configured else transform('Files', 'DataGrid', '''<fields><field><name>file_path</name><type>String</type><length>-1</length><precision>-1</precision></field></fields><data>'''+''.join(f'<line><item>{escape(str(fixtures / f))}</item></line>' for f in ('valid.xtf','second.xtf'))+'</data>', 100)
-    validator = transform('Validate', 'INTERLIS_ILIVALIDATOR_TRANSFORM', f'''<useFilePathField>{'N' if configured else 'Y'}</useFilePathField><filePathField>{field}</filePathField><staticFilePath>${{FIXTURES}}/valid.xtf</staticFilePath><modelNames>TransferInputTest</modelNames><repositoryUrls>{escape(str(fixtures))}</repositoryUrls><configMode>STATIC</configMode><metaConfigMode>STATIC</metaConfigMode><failPipelineOnInvalid>Y</failPipelineOnInvalid><outputIsValidField>is_valid</outputIsValidField><outputValidationMessageField>validation_message</outputValidationMessageField>''', 340)
+    static_file = 'invalid.xtf' if case == 'configured-invalid' else 'valid.xtf'
+    validator = transform('Validate', 'INTERLIS_ILIVALIDATOR_TRANSFORM', f'''<useFilePathField>{'N' if configured else 'Y'}</useFilePathField><filePathField>{field}</filePathField><staticFilePath>${{FIXTURES}}/{static_file}</staticFilePath><modelNames>TransferInputTest</modelNames><repositoryUrls>{escape(str(fixtures))}</repositoryUrls><configMode>STATIC</configMode><metaConfigMode>STATIC</metaConfigMode><failPipelineOnInvalid>Y</failPipelineOnInvalid><outputIsValidField>is_valid</outputIsValidField><outputValidationMessageField>validation_message</outputValidationMessageField>''', 340)
     output = transform('Results', 'TextFileOutput', f'''<separator>;</separator><enclosure>"</enclosure><header>Y</header><footer>N</footer><format>UNIX</format><encoding>UTF-8</encoding><compression>None</compression><file><name>{escape(str(work/case))}</name><extension>csv</extension><split>N</split><haspartno>N</haspartno><append>N</append><add_date>N</add_date><add_time>N</add_time><splitevery>0</splitevery></file><fields><field><name>is_valid</name><type>Boolean</type><format/></field><field><name>validation_message</name><type>String</type></field></fields>''', 570)
     hops = ('' if configured else '<hop><from>Files</from><to>Validate</to><enabled>Y</enabled></hop>')+'<hop><from>Validate</from><to>Results</to><enabled>Y</enabled></hop>'
     xml = f'<?xml version="1.0" encoding="UTF-8"?><pipeline><info><name>{case}</name><pipeline_type>Normal</pipeline_type><parameters><parameter><name>FIXTURES</name><default_value>{escape(str(fixtures))}</default_value></parameter></parameters></info><order>{hops}</order>{source}{validator}{output}</pipeline>'
@@ -55,18 +56,27 @@ def main():
     for script in hop.glob('*.sh'): script.chmod(0o755)
     fixtures=work/'fixtures'; shutil.copytree(ROOT/'e2e/fixtures',fixtures)
     shutil.copyfile(fixtures/'valid.xtf', fixtures/'second.xtf')
+    invalid = fixtures/'invalid.xtf'
+    invalid.write_text((fixtures/'valid.xtf').read_text().replace('<Name>Example</Name>', ''))
+    assert invalid.read_text() != (fixtures/'valid.xtf').read_text(), 'Invalid fixture was not created'
     metadata=work/'config/metadata/pipeline-run-configuration'; metadata.mkdir(parents=True)
     (metadata/'local.json').write_text(json.dumps({'name':'local','engineRunConfiguration':{'Local':{'safe_mode':True,'rowset_size':'10000'}}}))
     env=os.environ.copy(); env.update({'HOP_CONFIG_FOLDER':str(work/'config'), 'HOP_AUDIT_FOLDER':str(work/'audit'), 'HOP_METADATA_FOLDER':str(metadata.parent),'FIXTURES':str(fixtures),'HOP_JAVA_HOME':env.get('JAVA_HOME','')})
     (work/'config').mkdir(exist_ok=True); (work/'audit').mkdir()
     results=[]
-    for case in ('field','configured','missing-field'):
+    for case in ('field','configured','configured-invalid','missing-field'):
         hpl=pipeline(work, fixtures, case)
         cmd=['bash',str(hop/'hop-run.sh'),'-f',str(hpl),'-r','local']
         proc=subprocess.run(cmd,cwd=hop,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,timeout=180)
         (work/(case+'.log')).write_text(proc.stdout)
         if case=='missing-field':
             assert proc.returncode != 0 and 'missing_path' in proc.stdout, proc.stdout[-6000:]
+        elif case=='configured-invalid':
+            assert proc.returncode != 0 and 'Validation failed for file:' in proc.stdout, proc.stdout[-6000:]
+            result_file = work/(case+'.csv')
+            if result_file.exists():
+                with result_file.open() as f: rows=list(csv.DictReader(f,delimiter=';'))
+                assert not rows, rows
         else:
             assert proc.returncode==0, proc.stdout[-6000:]
             with (work/(case+'.csv')).open() as f: rows=list(csv.DictReader(f,delimiter=';'))

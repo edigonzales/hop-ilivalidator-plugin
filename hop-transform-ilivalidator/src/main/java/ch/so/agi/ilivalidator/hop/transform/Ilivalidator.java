@@ -73,8 +73,7 @@ public class Ilivalidator extends BaseTransform<IlivalidatorMeta, IlivalidatorDa
       if (canEmitSingleStaticRow()) {
         data.emittedSingleStaticRow = true;
         IlivalidatorResult result = getStaticValidationResult();
-        putRow(data.outputRowMeta, createOutputRow(new Object[0], result));
-        return true;
+        return handleValidationResult(new Object[0], result);
       }
 
       setOutputDone();
@@ -84,6 +83,11 @@ public class Ilivalidator extends BaseTransform<IlivalidatorMeta, IlivalidatorDa
     IlivalidatorResult result =
         meta.isUseFilePathField() ? validateFromInputRow(row) : getStaticValidationResult();
 
+    return handleValidationResult(row, result);
+  }
+
+  private boolean handleValidationResult(Object[] inputRow, IlivalidatorResult result)
+      throws HopTransformException {
     if (isTechnicalFailure(result)) {
       throw new HopTransformException(
           BaseMessages.getString(
@@ -98,7 +102,7 @@ public class Ilivalidator extends BaseTransform<IlivalidatorMeta, IlivalidatorDa
           BaseMessages.getString(PKG, "Ilivalidator.Transform.InvalidDataException", result.getCheckedFile()));
     }
 
-    putRow(data.outputRowMeta, createOutputRow(row, result));
+    putRow(data.outputRowMeta, createOutputRow(inputRow, result));
 
     if (!result.isValid() && isBasic()) {
       logBasic(

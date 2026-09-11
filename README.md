@@ -187,6 +187,11 @@ rely on an ANTLR JAR being present in the Hop installation.
 
 Technical ilivalidator failures (for example `compiler failed`, unsupported INTERLIS version message, or model file resolution failures) are treated as technical errors and now throw a `HopTransformException` in the transform, independent of `failPipelineOnInvalid`.
 
+When `useFilePathField` is disabled and the transform has no incoming rows, the configured
+static file is validated once. The result follows the same `failPipelineOnInvalid` rule as
+field-based validation: an invalid result is emitted with `is_valid=false` when the option is
+disabled, and throws a `HopTransformException` without emitting a row when it is enabled.
+
 ## Recommended Hop GUI run configuration
 
 - Main class: `org.apache.hop.ui.hopgui.HopGui`
