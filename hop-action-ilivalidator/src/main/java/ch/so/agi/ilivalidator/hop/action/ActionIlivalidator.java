@@ -6,10 +6,8 @@ import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptions;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorResult;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorService;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -291,40 +289,154 @@ public class ActionIlivalidator extends ActionBase implements IAction {
   static final class MaskMatcher {
 
     private final boolean defaultMatch;
-    private final Pattern regex;
-    private final PathMatcher glob;
+    private final Pattern pattern;
 
-    private MaskMatcher(boolean defaultMatch, Pattern regex, PathMatcher glob) {
+    private MaskMatcher(boolean defaultMatch, Pattern pattern) {
       this.defaultMatch = defaultMatch;
-      this.regex = regex;
-      this.glob = glob;
+      this.pattern = pattern;
     }
 
     static MaskMatcher of(String mask, boolean defaultMatch) throws HopWorkflowException {
       if (mask == null || mask.isBlank()) {
-        return new MaskMatcher(defaultMatch, null, null);
+        return new MaskMatcher(defaultMatch, null);
       }
 
       if (mask.startsWith("glob:")) {
-        return new MaskMatcher(defaultMatch, null, FileSystems.getDefault().getPathMatcher(mask));
+        return new MaskMatcher(defaultMatch, Pattern.compile(globToRegex(mask.substring("glob:".length()))));
       }
 
       String normalizedMask = mask.startsWith("regex:") ? mask.substring("regex:".length()) : mask;
       try {
-        return new MaskMatcher(defaultMatch, Pattern.compile(normalizedMask), null);
+        return new MaskMatcher(defaultMatch, Pattern.compile(normalizedMask));
       } catch (PatternSyntaxException e) {
         throw new HopWorkflowException("Invalid include/exclude regex: " + mask, e);
       }
     }
 
     boolean matches(String value) {
-      if (regex == null && glob == null) {
+      if (pattern == null) {
         return defaultMatch;
       }
-      if (glob != null) {
-        return glob.matches(Path.of(value));
+      return pattern.matcher(value).matches();
+    }
+
+    private static String globToRegex(String glob) {
+      StringBuilder regex = new StringBuilder();
+      int end = appendGlobRegex(glob, 0, "", regex);
+      if (end != glob.length()) {
+        throw new PatternSyntaxException("Unexpected glob token", glob, end);
       }
-      return regex.matcher(value).matches();
+      return regex.toString();
+    }
+
+    private static int appendGlobRegex(
+        String glob, int index, String terminators, StringBuilder regex) {
+      while (index < glob.length()) {
+        char current = glob.charAt(index);
+        if (terminators.indexOf(current) >= 0) {
+          return index;
+        }
+
+        switch (current) {
+          case '*':
+            int starEnd = index + 1;
+            while (starEnd < glob.length() && glob.charAt(starEnd) == '*') {
+              starEnd++;
+            }
+            regex.append(starEnd - index > 1 ? ".*" : "[^/\\\\]*");
+            index = starEnd;
+            break;
+          case '?':
+            regex.append("[^/\\\\]");
+            index++;
+            break;
+          case '[':
+            index = appendCharacterClass(glob, index, regex);
+            break;
+          case '{':
+            index = appendAlternatives(glob, index, regex);
+            break;
+          case '\\':
+            if (index + 1 >= glob.length()) {
+              throw new PatternSyntaxException("Dangling escape", glob, index);
+            }
+            regex.append(Pattern.quote(String.valueOf(glob.charAt(index + 1))));
+            index += 2;
+            break;
+          default:
+            regex.append(Pattern.quote(String.valueOf(current)));
+            index++;
+            break;
+        }
+      }
+      return index;
+    }
+
+    private static int appendCharacterClass(String glob, int start, StringBuilder regex) {
+      int index = start + 1;
+      if (index >= glob.length()) {
+        throw new PatternSyntaxException("Missing closing bracket", glob, start);
+      }
+
+      StringBuilder characterClass = new StringBuilder("[");
+      if (glob.charAt(index) == '!' || glob.charAt(index) == '^') {
+        characterClass.append('^');
+        index++;
+      }
+      if (index < glob.length() && glob.charAt(index) == ']') {
+        characterClass.append("\\]");
+        index++;
+      }
+
+      boolean closed = false;
+      while (index < glob.length()) {
+        char current = glob.charAt(index);
+        if (current == ']') {
+          closed = true;
+          index++;
+          break;
+        }
+        if (current == '\\') {
+          if (index + 1 >= glob.length()) {
+            throw new PatternSyntaxException("Dangling escape in character class", glob, index);
+          }
+          characterClass.append('\\').append(glob.charAt(index + 1));
+          index += 2;
+        } else {
+          characterClass.append(current);
+          index++;
+        }
+      }
+
+      if (!closed) {
+        throw new PatternSyntaxException("Missing closing bracket", glob, start);
+      }
+      characterClass.append(']');
+      regex.append(characterClass);
+      return index;
+    }
+
+    private static int appendAlternatives(String glob, int start, StringBuilder regex) {
+      StringBuilder alternatives = new StringBuilder("(?:");
+      int branchStart = start + 1;
+
+      while (true) {
+        StringBuilder branch = new StringBuilder();
+        int delimiter = appendGlobRegex(glob, branchStart, ",}", branch);
+        if (delimiter >= glob.length()) {
+          throw new PatternSyntaxException("Missing closing brace", glob, start);
+        }
+
+        alternatives.append(branch);
+        if (glob.charAt(delimiter) == '}') {
+          alternatives.append(')');
+          regex.append(alternatives);
+          return delimiter + 1;
+        }
+
+        alternatives.append('|');
+        branchStart = delimiter + 1;
+      }
     }
   }
 
