@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>ch.so.agi.ilivalidator</groupId>
+    <groupId>ch.so.agi</groupId>
     <artifactId>assemblies</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
@@ -23,13 +23,13 @@
 
   <dependencies>
     <dependency>
-      <groupId>ch.so.agi.ilivalidator</groupId>
+      <groupId>ch.so.agi</groupId>
       <artifactId>assemblies-action-ilivalidator</artifactId>
       <version>${project.version}</version>
       <type>pom</type>
     </dependency>
     <dependency>
-      <groupId>ch.so.agi.ilivalidator</groupId>
+      <groupId>ch.so.agi</groupId>
       <artifactId>assemblies-transform-ilivalidator</artifactId>
       <version>${project.version}</version>
       <type>pom</type>

@@ -11,11 +11,25 @@ Diese Anleitung erklärt Ihnen, wie Sie die INTERLIS Validator Plugins in Apache
 
 ## Schritt 1: Plugin-Dateien herunterladen
 
-1. Gehen Sie auf die GitHub-Seite des Projekts
-2. Klicken Sie links im Menü auf **Releases**
-3. Laden Sie die beiden ZIP-Dateien herunter:
-   - `hop-action-ilivalidator-*.zip` (für Workflow-Aktionen)
-   - `hop-transform-ilivalidator-*.zip` (für Pipeline-Transformationen)
+Die Plugin-ZIPs werden als Maven-Artefakte veröffentlicht, nicht als GitHub-Releases.
+Für die aktuelle Snapshot-Version können Sie beide ZIPs mit Maven aus dem
+Snapshot-Repository laden:
+
+```bash
+mvn -U -B -ntp dependency:copy \
+  -DremoteRepositories=interlis-snapshots::default::https://jars.interlis.guru/snapshots/ \
+  -Dartifact=ch.so.agi:hop-action-ilivalidator:0.1.0-SNAPSHOT:zip \
+  -DoutputDirectory=.
+
+mvn -U -B -ntp dependency:copy \
+  -DremoteRepositories=interlis-snapshots::default::https://jars.interlis.guru/snapshots/ \
+  -Dartifact=ch.so.agi:hop-transform-ilivalidator:0.1.0-SNAPSHOT:zip \
+  -DoutputDirectory=.
+```
+
+Alternativ können Sie die beiden ZIPs aus einem lokalen Build aus
+`assemblies/assemblies-action-ilivalidator/target/` beziehungsweise
+`assemblies/assemblies-transform-ilivalidator/target/` verwenden.
 
 ---
 
@@ -104,7 +118,7 @@ Nach dem Neustart von Apache Hop können Sie die Installation überprüfen:
 
 ### Fehlermeldung beim Start
 
-- **Java-Version prüfen:** INTERLIS Validator benötigt Java 17 oder höher
+- **Java-Version prüfen:** INTERLIS Validator benötigt Java 21 oder höher
 - **Log-Datei prüfen:** Im Hop-Verzeichnis gibt es einen `logs`-Ordner mit Protokolldateien
 
 ### Falsche Entpackung unter Windows

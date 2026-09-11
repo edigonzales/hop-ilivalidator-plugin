@@ -37,6 +37,7 @@ Build prerequisites:
 - Access to:
   - Maven Central for Apache Hop artifacts
   - `https://jars.interlis.ch/` for `ch.interlis:ilivalidator:1.15.0`
+  - `https://jars.interlis.guru/snapshots/` for Commons `0.1.0-SNAPSHOT`
 
 ## Install in Hop
 
@@ -232,9 +233,23 @@ Both plugin JARs therefore include ANTLR relocated to
 `ch.so.agi.ilivalidator.shaded.antlr`, avoiding collisions with host libraries.
 The INTERLIS library versions remain unchanged.
 
-## Verification and release
+## Maven artifacts and verification
 
-Use Java 21 and run:
+The two installable ZIPs are published as normal Maven snapshot artifacts:
+
+- `ch.so.agi:hop-action-ilivalidator:0.1.0-SNAPSHOT` (`zip`)
+- `ch.so.agi:hop-transform-ilivalidator:0.1.0-SNAPSHOT` (`zip`)
+
+Consumers declare the base `0.1.0-SNAPSHOT` version. Maven resolves the current
+snapshot through repository metadata; timestamped snapshot filenames are not part
+of this repository's dependency configuration.
+
+The CI matrix uses Java 21 and 25 on Ubuntu, macOS and Windows. Ubuntu/Java 21 is
+the canonical build: it creates the only publishable bundle, runs the package
+checks and executes the Installed-Hop E2E. All other matrix cells run compatibility
+tests only. Pull requests never publish Maven artifacts.
+
+Run the local verification with Java 21:
 
 ```bash
 mvn -U -B -ntp clean verify
@@ -252,14 +267,19 @@ The E2E script downloads and checksums Hop 2.19 in `~/.cache/hop-ilivalidator`, 
 the ZIPs into `target/e2e/hop`, and runs three pipelines: two incoming file paths, one
 configured path without input, and an invalid field name. Its INTERLIS model and data
 are local fixtures. Logs, CSV output, and results stay under `target/e2e/`.
-`target/package-verification.json` records archive checksums and the actual timestamped
-Commons versions matched against the remote repository.
+`target/package-verification.json` records archive checksums and the resolved base
+Commons snapshots. Package verification compares the embedded Commons bytes with
+the Maven-local artifacts selected by the current build; it does not manually select
+timestamped repository versions.
 
 An optional full debug distribution is built with `mvn -Pdebug -pl assemblies/debug -am package`.
 The regular `verify` build creates only the two small plugin ZIPs. Development sync scripts
 install those ZIPs including `lib/`; restart Hop after updating them.
 
-Pull requests build and test without publishing. Pushes and manual runs on `main`
-publish both ZIPs only after verification, then download the release files, compare
-bytes, and rerun the packaged-plugin pipelines. See the Release workflow and its
-`release-verification` artifact for the exact snapshots and results.
+The `CI` workflow verifies pull requests, pushes and manual runs. Pushes and manual
+runs on `main` publish both ZIPs only after the complete matrix and canonical E2E
+have passed. The publish job downloads the verified bundle, validates its manifest
+and SHA-256 values, deploys without rebuilding, then resolves both public Maven
+snapshots through an empty local cache and compares their bytes with the tested ZIPs.
+The Maven credentials are supplied through `INTERLIS_MAVEN_USERNAME` and
+`INTERLIS_MAVEN_TOKEN`.

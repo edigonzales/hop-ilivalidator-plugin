@@ -12,7 +12,7 @@
       <useProjectArtifact>false</useProjectArtifact>
       <useTransitiveDependencies>false</useTransitiveDependencies>
       <outputDirectory>plugins/transforms/ilivalidator</outputDirectory>
-      <includes><include>ch.so.agi.ilivalidator:hop-transform-ilivalidator</include></includes>
+      <includes><include>ch.so.agi:hop-transform-ilivalidator</include></includes>
       <scope>runtime</scope>
       <unpack>false</unpack>
     </dependencySet>

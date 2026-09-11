@@ -22,7 +22,7 @@ import org.apache.hop.pipeline.transform.TransformMeta;
     id = "INTERLIS_ILIVALIDATOR_TRANSFORM",
     name = "i18n::IlivalidatorMeta.Name",
     description = "i18n::IlivalidatorMeta.Description",
-    image = "ch/so/agi/ilivalidator/hop/transform/icons/xml-validator.svg",
+    image = "ch/so/agi/ilivalidator/hop/transform/icons/ilivalidator.svg",
     categoryDescription = "i18n:org.apache.hop.pipeline.transform:BaseTransform.Category.Flow",
     documentationUrl = "/pipeline/transforms/ilivalidator.html",
     keywords = {"i18n::IlivalidatorMeta.keyword", "interlis", "validation"})

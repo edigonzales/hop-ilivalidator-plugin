@@ -1,20 +1,22 @@
-# Release workflow
+# CI and Maven publication
 
-`release.yml` prüft Pull Requests sowie Pushes auf `main`. Manuelle Läufe sind nur
-für `main` zulässig. Der Build verwendet Java 21, Hop 2.19 und SWT unter Xvfb.
+`ci.yml` prüft Pull Requests, Pushes auf `main` und manuelle Läufe. Der Build
+verwendet Hop 2.19, Java 21/25 und SWT unter Xvfb auf Linux.
 
-Vor der Veröffentlichung laufen `mvn clean verify`, die Prüfung der ZIP-Inhalte
-und drei Pipelines mit den installierten Plugin-ZIPs in einer isolierten Hop-Installation.
+Die Matrix umfasst Ubuntu, macOS und Windows. Ubuntu/Java 21 führt `mvn clean verify`,
+die ZIP-Prüfung und drei Pipelines mit den installierten Plugin-ZIPs in einer
+isolierten Hop-Installation aus. Die übrigen Matrixläufe führen `mvn clean test` aus.
 Pull Requests veröffentlichen nichts.
 
-Für `main` erzeugt der Release-Job wie bisher einen GitHub-Release mit beiden ZIPs.
-Danach lädt er die Assets herunter, vergleicht ihre Bytes mit dem Build und wiederholt
-den Paket- und Pipeline-Test. Der Workflow ist erst danach erfolgreich.
+Für `main` lädt der Publish-Job das kanonische Bundle herunter und veröffentlicht
+beide ZIPs auf `https://jars.interlis.guru/snapshots/`. Es werden keine GitHub-Releases
+für die Plugins erzeugt. Die Artefakte werden danach über die normale
+`0.1.0-SNAPSHOT`-Koordinate aus einem leeren Maven-Cache geladen und bytegenau
+mit dem getesteten Bundle verglichen.
 
-Nur der Release-Job benötigt `contents: write`. Es werden keine zusätzlichen Secrets
-benötigt. Gleichzeitige Veröffentlichungen für `main` werden serialisiert.
+Die Secrets heißen `INTERLIS_MAVEN_USERNAME` und `INTERLIS_MAVEN_TOKEN`.
 
 Artefakte:
 - `verification-diagnostics`: Testberichte und Pipeline-Logs, auch bei Fehlern.
-- `release-zips`: ZIPs, Prüfsummen und Testergebnisse des Builds.
-- `release-verification`: Ergebnisse des Downloadtests und tatsächliche Commons-Snapshots.
+- `hop-ilivalidator-plugin-canonical`: beide verifizierten ZIPs, koordinatenidentische
+  Maven-POMs und ein gemeinsames SHA-256-Manifest.

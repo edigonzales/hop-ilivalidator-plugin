@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>ch.so.agi.ilivalidator</groupId>
+    <groupId>ch.so.agi</groupId>
     <artifactId>assemblies</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
@@ -18,7 +18,7 @@
     <dependency><groupId>ch.so.agi</groupId><artifactId>hop-plugin-commons-ui</artifactId><version>${commons.version}</version><scope>runtime</scope></dependency>
     <dependency><groupId>ch.so.agi</groupId><artifactId>hop-plugin-commons-core</artifactId><version>${commons.version}</version><scope>runtime</scope></dependency>
     <dependency>
-      <groupId>ch.so.agi.ilivalidator</groupId>
+      <groupId>ch.so.agi</groupId>
       <artifactId>hop-transform-ilivalidator</artifactId>
       <version>${project.version}</version>
       <scope>runtime</scope>

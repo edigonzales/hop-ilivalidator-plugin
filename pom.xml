@@ -3,7 +3,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>ch.so.agi.ilivalidator</groupId>
+  <groupId>ch.so.agi</groupId>
   <artifactId>hop-ilivalidator-plugin</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
@@ -65,7 +65,7 @@
 
   <repositories>
     <repository>
-      <id>interlis-guru-snapshots</id>
+      <id>sogeo-snapshots</id>
       <url>https://jars.interlis.guru/snapshots/</url>
       <releases><enabled>false</enabled></releases>
       <snapshots><enabled>true</enabled></snapshots>

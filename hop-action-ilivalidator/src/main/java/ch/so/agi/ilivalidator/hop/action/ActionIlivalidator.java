@@ -34,7 +34,7 @@ import org.apache.hop.workflow.action.IAction;
     id = "INTERLIS_ILIVALIDATOR_ACTION",
     name = "i18n::ActionIlivalidator.Name",
     description = "i18n::ActionIlivalidator.Description",
-    image = "ch/so/agi/ilivalidator/hop/action/icons/xml-validator.svg",
+    image = "ch/so/agi/ilivalidator/hop/action/icons/ilivalidator.svg",
     categoryDescription = "i18n:org.apache.hop.workflow:ActionCategory.Category.General",
     documentationUrl = "/workflow/actions/ilivalidator.html",
     keywords = {"i18n::ActionIlivalidator.keyword", "interlis", "validation"})
