@@ -30,7 +30,7 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
 
   private static final Class<?> PKG = IlivalidatorMeta.class;
 
-  @HopMetadataProperty private boolean useFilePathField = true;
+  @HopMetadataProperty private boolean useFilePathField = false;
   @HopMetadataProperty private String filePathField;
   @HopMetadataProperty private String staticFilePath;
 
@@ -56,7 +56,7 @@ public class IlivalidatorMeta extends BaseTransformMeta<Ilivalidator, Ilivalidat
 
   @Override
   public void setDefault() {
-    useFilePathField = true;
+    useFilePathField = false;
     filePathField = "";
     staticFilePath = "";
     modelNames = "";

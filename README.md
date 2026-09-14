@@ -221,8 +221,10 @@ a manually entered field name. Errors appear below the input without moving its 
 Both the configured path and field name survive mode changes and reopening the dialog.
 They map to the existing `staticFilePath`, `filePathField`, and `useFilePathField`
 properties. Only OK commits changes; Cancel, Escape, and window close discard them.
-Existing `.hpl` files need no migration. Runtime interpretation is unchanged, including
-the existing variable resolution of incoming paths.
+Newly created transforms start in **Value / Variable** mode, matching the default of
+`ValueOrFieldControl`. Stored transforms keep the mode saved in their pipeline file
+(`useFilePathField`), so existing `.hpl` files need no migration. Runtime interpretation
+is unchanged, including the existing variable resolution of incoming paths.
 
 Browse uses the native local-file picker because the validator accepts local paths.
 Variables are resolved only to preselect a location; cancelling preserves the original

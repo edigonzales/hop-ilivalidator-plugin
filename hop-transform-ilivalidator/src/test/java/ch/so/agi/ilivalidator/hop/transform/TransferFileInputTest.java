@@ -52,6 +52,19 @@ class TransferFileInputTest {
   }
 
   @Test
+  void freshMetaStartsInConfiguredMode() {
+    IlivalidatorMeta meta = new IlivalidatorMeta();
+    meta.setDefault();
+    assertFalse(meta.isUseFilePathField());
+
+    TransferFileInput input =
+        input(() -> new String[] {"file_path"}, Optional.empty(), new AtomicInteger());
+    input.load(meta);
+
+    assertEquals(SourceMode.CONFIGURED, widget().getValue().mode());
+  }
+
+  @Test
   void mapsExistingMetadataWithoutChangesAndPreservesBothTexts() throws Exception {
     IlivalidatorMeta meta = meta();
     AtomicInteger changes = new AtomicInteger();
