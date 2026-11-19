@@ -13,6 +13,7 @@ import org.apache.hop.core.row.IRowMeta;
 import org.apache.hop.core.row.value.ValueMetaString;
 import org.apache.hop.core.variables.*;
 import org.apache.hop.core.xml.XmlHandler;
+import org.apache.hop.i18n.BaseMessages;
 import org.apache.hop.metadata.api.IHopMetadataProvider;
 import org.apache.hop.pipeline.*;
 import org.apache.hop.pipeline.transform.*;
@@ -188,7 +189,12 @@ class TransferFileInputTest {
             (s, v, c, k, e, n) -> selection.get(),
             changes::incrementAndGet);
     input.load(meta());
-    Button browse = all(widget(), Button.class).getFirst();
+    String browseText = BaseMessages.getString(ValueOrFieldControl.class, "ValueOrField.Browse");
+    Button browse =
+        all(widget(), Button.class).stream()
+            .filter(button -> browseText.equals(button.getText()))
+            .findFirst()
+            .orElseThrow();
     browse.notifyListeners(SWT.Selection, new Event());
     assertEquals(0, changes.get());
     selection.set(Optional.of("/tmp/selected.xtf"));

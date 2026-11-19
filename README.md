@@ -285,8 +285,7 @@ install those ZIPs including `lib/`; restart Hop after updating them.
 
 The `CI` workflow verifies pull requests, pushes and manual runs. Pushes and manual
 runs on `main` publish both ZIPs only after the complete matrix and canonical E2E
-have passed. The publish job downloads the verified bundle, validates its manifest
-and SHA-256 values, deploys without rebuilding, then resolves both public Maven
-snapshots through an empty local cache and compares their bytes with the tested ZIPs.
+have passed. The publish job deploys the two ZIPs and their Maven POMs from the
+canonical artifact of the same workflow run.
 The Maven credentials are supplied through `INTERLIS_MAVEN_USERNAME` and
 `INTERLIS_MAVEN_TOKEN`.

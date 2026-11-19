@@ -10,13 +10,12 @@ Pull Requests veröffentlichen nichts.
 
 Für `main` lädt der Publish-Job das kanonische Bundle herunter und veröffentlicht
 beide ZIPs auf `https://jars.interlis.guru/snapshots/`. Es werden keine GitHub-Releases
-für die Plugins erzeugt. Die Artefakte werden danach über die normale
-`0.1.0-SNAPSHOT`-Koordinate aus einem leeren Maven-Cache geladen und bytegenau
-mit dem getesteten Bundle verglichen.
+für die Plugins erzeugt. Maven veröffentlicht die getesteten Dateien direkt
+aus diesem CI-Lauf.
 
 Die Secrets heißen `INTERLIS_MAVEN_USERNAME` und `INTERLIS_MAVEN_TOKEN`.
 
 Artefakte:
 - `verification-diagnostics`: Testberichte und Pipeline-Logs, auch bei Fehlern.
 - `hop-ilivalidator-plugin-canonical`: beide verifizierten ZIPs, koordinatenidentische
-  Maven-POMs und ein gemeinsames SHA-256-Manifest.
+  Maven-POMs.
