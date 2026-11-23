@@ -41,6 +41,34 @@ def pipeline(work, fixtures, case):
     xml = f'<?xml version="1.0" encoding="UTF-8"?><pipeline><info><name>{case}</name><pipeline_type>Normal</pipeline_type><parameters><parameter><name>FIXTURES</name><default_value>{escape(str(fixtures))}</default_value></parameter></parameters></info><order>{hops}</order>{source}{validator}{output}</pipeline>'
     path=work/(case+'.hpl'); path.write_text(xml); return path
 
+def workflow(work, fixtures, case, transfer_file):
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<workflow>
+  <name>{case}</name>
+  <actions>
+    <action>
+      <name>Start</name>
+      <type>SPECIAL</type>
+      <repeat>N</repeat>
+      <schedulerType>0</schedulerType>
+    </action>
+    <action>
+      <name>Validate</name>
+      <type>INTERLIS_ILIVALIDATOR_ACTION</type>
+      <inputMode>SINGLE</inputMode>
+      <filePath>{escape(str(fixtures / transfer_file))}</filePath>
+      <modelNames>TransferInputTest</modelNames>
+      <repositoryUrls>{escape(str(fixtures))}</repositoryUrls>
+    </action>
+  </actions>
+  <hops><hop><from>Start</from><to>Validate</to><enabled>Y</enabled>
+    <evaluation>Y</evaluation><unconditional>Y</unconditional></hop></hops>
+</workflow>
+"""
+    path = work / (case + '.hwf')
+    path.write_text(xml, encoding='utf-8')
+    return path
+
 def main():
     p=argparse.ArgumentParser()
     p.add_argument('--transform', type=Path, default=ROOT/'assemblies/assemblies-transform-ilivalidator/target/hop-transform-ilivalidator-0.1.0-SNAPSHOT.zip')
@@ -61,6 +89,10 @@ def main():
     assert invalid.read_text() != (fixtures/'valid.xtf').read_text(), 'Invalid fixture was not created'
     metadata=work/'config/metadata/pipeline-run-configuration'; metadata.mkdir(parents=True)
     (metadata/'local.json').write_text(json.dumps({'name':'local','engineRunConfiguration':{'Local':{'safe_mode':True,'rowset_size':'10000'}}}))
+    workflow_metadata = metadata.parent / 'workflow-run-configuration'
+    workflow_metadata.mkdir()
+    (workflow_metadata / 'local.json').write_text(
+        json.dumps({'name': 'local', 'engineRunConfiguration': {'Local': {'safe_mode': True}}}))
     env=os.environ.copy(); env.update({'HOP_CONFIG_FOLDER':str(work/'config'), 'HOP_AUDIT_FOLDER':str(work/'audit'), 'HOP_METADATA_FOLDER':str(metadata.parent),'FIXTURES':str(fixtures),'HOP_JAVA_HOME':env.get('JAVA_HOME','')})
     (work/'config').mkdir(exist_ok=True); (work/'audit').mkdir()
     results=[]
@@ -83,6 +115,19 @@ def main():
             assert len(rows)==(2 if case=='field' else 1), rows
             assert all(r['is_valid'].lower() in ('y','true') for r in rows), rows
         results.append({'case':case,'exitCode':proc.returncode,'result':'passed'})
+    for case, transfer_file, valid in (
+        ('action-valid', 'valid.xtf', True),
+        ('action-invalid', 'invalid.xtf', False),
+    ):
+        hwf = workflow(work, fixtures, case, transfer_file)
+        proc = subprocess.run(
+            ['bash', str(hop / 'hop-run.sh'), '-f', str(hwf), '-r', 'local'],
+            cwd=hop, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=180)
+        (work / (case + '.log')).write_text(proc.stdout, encoding='utf-8')
+        expected = 'INTERLIS validation successful' if valid else 'INTERLIS validation failed'
+        assert (proc.returncode == 0) == valid and expected in proc.stdout, proc.stdout[-6000:]
+        results.append({'case': case, 'exitCode': proc.returncode, 'result': 'passed'})
+
     (work/'results.json').write_text(json.dumps(results,indent=2)+'\n'); print(json.dumps(results,indent=2))
 
 if __name__=='__main__': main()

@@ -14,6 +14,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Date;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.interlis2.validator.Validator;
 
 class IlivalidatorServiceTest {
@@ -25,7 +26,7 @@ class IlivalidatorServiceTest {
     IlivalidatorResult result =
         service.validate(
             Path.of("/path/that/does/not/exist.xtf"),
-            IlivalidatorOptions.builder().runIlivalidator(false).build());
+            IlivalidatorOptions.defaults());
 
     assertFalse(result.isValid());
     assertTrue(result.getIssues().stream().anyMatch(issue -> "IO_ERROR".equals(issue.getCode())));
@@ -38,7 +39,7 @@ class IlivalidatorServiceTest {
 
     try {
       IlivalidatorResult result =
-          service.validate(malformed, IlivalidatorOptions.builder().runIlivalidator(false).build());
+          service.validate(malformed, IlivalidatorOptions.defaults());
 
       assertFalse(result.isValid());
       assertTrue(
@@ -49,13 +50,21 @@ class IlivalidatorServiceTest {
   }
 
   @Test
-  void shouldReturnValidForWellFormedXmlWhenValidatorIsDisabled() {
-    Path validXml = Path.of("src/test/resources/ch/so/agi/ilivalidator/core/validator/rules-valid.xml");
+  void shouldRejectWellFormedTransferMissingMandatoryAttribute(@TempDir Path directory)
+      throws IOException {
+    Path fixtures = Path.of("..", "e2e", "fixtures").toAbsolutePath();
+    Path invalid = directory.resolve("invalid.xtf");
+    Files.writeString(invalid, Files.readString(fixtures.resolve("valid.xtf"))
+        .replace("<Name>Example</Name>", ""));
+    IlivalidatorOptions options =
+        IlivalidatorOptions.builder().repositoryUrls(List.of(fixtures.toString())).build();
 
-    IlivalidatorResult result =
-        service.validate(validXml, IlivalidatorOptions.builder().runIlivalidator(false).build());
+    IlivalidatorResult result = service.validate(invalid, options);
 
-    assertTrue(result.isValid());
+    assertFalse(result.isValid());
+    assertTrue(result.getIssues().stream()
+        .anyMatch(issue -> issue.getSeverity() == IlivalidatorIssue.Severity.ERROR
+            && issue.getMessage().contains("Name")));
   }
 
   @Test

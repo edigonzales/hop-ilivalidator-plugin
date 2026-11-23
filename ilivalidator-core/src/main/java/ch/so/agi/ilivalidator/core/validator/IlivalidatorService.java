@@ -65,9 +65,7 @@ public class IlivalidatorService {
       return out.build();
     }
 
-    if (options.isRunIlivalidator()) {
-      runIlivalidator(path, options, out);
-    }
+    runIlivalidator(path, options, out);
 
     return out.build();
   }
