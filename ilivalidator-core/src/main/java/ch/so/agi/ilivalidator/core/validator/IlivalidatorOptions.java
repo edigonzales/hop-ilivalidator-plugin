@@ -9,7 +9,6 @@ public final class IlivalidatorOptions {
   private final List<String> modelNames;
   private final List<String> repositoryUrls;
   private final List<IlivalidatorOptionEntry> optionEntries;
-  private final boolean runIlivalidator;
   private final boolean allObjectsAccessible;
   private final String configFile;
   private final String metaConfigFile;
@@ -20,7 +19,6 @@ public final class IlivalidatorOptions {
     this.modelNames = Collections.unmodifiableList(new ArrayList<>(builder.modelNames));
     this.repositoryUrls = Collections.unmodifiableList(new ArrayList<>(builder.repositoryUrls));
     this.optionEntries = Collections.unmodifiableList(new ArrayList<>(builder.optionEntries));
-    this.runIlivalidator = builder.runIlivalidator;
     this.allObjectsAccessible = builder.allObjectsAccessible;
     this.configFile = builder.configFile;
     this.metaConfigFile = builder.metaConfigFile;
@@ -42,10 +40,6 @@ public final class IlivalidatorOptions {
 
   public List<String> getRepositoryUrls() {
     return repositoryUrls;
-  }
-
-  public boolean isRunIlivalidator() {
-    return runIlivalidator;
   }
 
   public boolean isAllObjectsAccessible() {
@@ -77,7 +71,6 @@ public final class IlivalidatorOptions {
     private final List<String> modelNames = new ArrayList<>();
     private final List<String> repositoryUrls = new ArrayList<>();
     private final List<IlivalidatorOptionEntry> optionEntries = new ArrayList<>();
-    private boolean runIlivalidator = true;
     private boolean allObjectsAccessible;
     private String configFile;
     private String metaConfigFile;
@@ -105,11 +98,6 @@ public final class IlivalidatorOptions {
             .map(String::trim)
             .forEach(this.repositoryUrls::add);
       }
-      return this;
-    }
-
-    public Builder runIlivalidator(boolean runIlivalidator) {
-      this.runIlivalidator = runIlivalidator;
       return this;
     }
 

@@ -39,66 +39,34 @@ public final class IlivalidatorOptionCatalog {
 
   private static List<IlivalidatorOptionDefinition> buildDefinitions() {
     List<IlivalidatorOptionDefinition> defs = new ArrayList<>();
-    defs.add(IlivalidatorOptionDefinition.of("models", "Model names", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("modeldir", "Model directory", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("refdata", "Reference data file", IlivalidatorOptionType.STRING));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "refmapping", "Reference mapping file", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("config", "Validation config file", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("metaConfig", "Meta-config file", IlivalidatorOptionType.STRING));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "runtimeParams", "Runtime parameters", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("scope", "Validation scope", IlivalidatorOptionType.STRING));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "mandatoryBaskets", "Mandatory baskets", IlivalidatorOptionType.STRING));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "optionalBaskets", "Optional baskets", IlivalidatorOptionType.STRING));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "bannedBaskets", "Banned baskets", IlivalidatorOptionType.STRING));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "forceTypeValidation", "Force type validation", IlivalidatorOptionType.BOOLEAN));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "disableAreaValidation", "Disable AREA validation", IlivalidatorOptionType.BOOLEAN));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "disableConstraintValidation",
-            "Disable constraint validation",
-            IlivalidatorOptionType.BOOLEAN));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "multiplicityOff", "Disable multiplicity validation", IlivalidatorOptionType.BOOLEAN));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "allObjectsAccessible", "All objects accessible", IlivalidatorOptionType.BOOLEAN));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "allowItfAreaHoles", "Allow ITF area holes", IlivalidatorOptionType.BOOLEAN));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "simpleBoundary", "Simple boundary", IlivalidatorOptionType.BOOLEAN));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "skipPolygonBuilding", "Skip polygon building", IlivalidatorOptionType.BOOLEAN));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "singlePass", "Single pass validation", IlivalidatorOptionType.BOOLEAN));
-    defs.add(IlivalidatorOptionDefinition.of("log", "Log file", IlivalidatorOptionType.STRING));
-    defs.add(
-        IlivalidatorOptionDefinition.of(
-            "logtime", "Log timestamps", IlivalidatorOptionType.BOOLEAN));
-    defs.add(IlivalidatorOptionDefinition.of("xtflog", "XTF log file", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("csvlog", "CSV log file", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("plugins", "Plugin folder", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("proxy", "Proxy host", IlivalidatorOptionType.STRING));
-    defs.add(IlivalidatorOptionDefinition.of("proxyPort", "Proxy port", IlivalidatorOptionType.INTEGER));
-    defs.add(IlivalidatorOptionDefinition.of("verbose", "Verbose logging", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("models", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("modeldir", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("refdata", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("refmapping", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("config", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("metaConfig", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("runtimeParams", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("scope", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("mandatoryBaskets", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("optionalBaskets", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("bannedBaskets", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("forceTypeValidation", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("disableAreaValidation", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("disableConstraintValidation", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("multiplicityOff", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("allObjectsAccessible", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("allowItfAreaHoles", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("simpleBoundary", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("skipPolygonBuilding", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("singlePass", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("log", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("logtime", IlivalidatorOptionType.BOOLEAN));
+    defs.add(new IlivalidatorOptionDefinition("xtflog", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("csvlog", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("plugins", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("proxy", IlivalidatorOptionType.STRING));
+    defs.add(new IlivalidatorOptionDefinition("proxyPort", IlivalidatorOptionType.INTEGER));
+    defs.add(new IlivalidatorOptionDefinition("verbose", IlivalidatorOptionType.BOOLEAN));
     return List.copyOf(defs);
   }
 }

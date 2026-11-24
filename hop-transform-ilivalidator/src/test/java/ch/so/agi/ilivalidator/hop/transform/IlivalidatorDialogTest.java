@@ -1,58 +1,14 @@
 package ch.so.agi.ilivalidator.hop.transform;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.lang.reflect.Field;
 import org.apache.hop.ui.core.gui.WindowProperty;
 import org.eclipse.swt.graphics.Rectangle;
 import org.junit.jupiter.api.Test;
 
-/**
- * Unit tests for IlivalidatorDialog.
- * <p>
- * Note: Full GUI testing requires SWT bot or similar framework.
- * These tests verify the dialog structure using reflection.
- */
 class IlivalidatorDialogTest {
-
-  @Test
-  void shouldHaveBrowseButtonFields() throws Exception {
-    Class<?> clazz = IlivalidatorDialog.class;
-
-    Field wbConfigValue = clazz.getDeclaredField("wbConfigValue");
-    Field wbMetaConfigValue = clazz.getDeclaredField("wbMetaConfigValue");
-    Field wbLogDirectory = clazz.getDeclaredField("wbLogDirectory");
-
-    assertNotNull(wbConfigValue);
-    assertNotNull(wbMetaConfigValue);
-    assertNotNull(wbLogDirectory);
-  }
-
-  @Test
-  void shouldHaveValidationConfigAndOptionsWidgets() throws Exception {
-    Class<?> clazz = IlivalidatorDialog.class;
-
-    Field wConfigMode = clazz.getDeclaredField("wConfigMode");
-    Field wConfigValue = clazz.getDeclaredField("wConfigValue");
-    Field wConfigField = clazz.getDeclaredField("wConfigField");
-    Field wMetaConfigMode = clazz.getDeclaredField("wMetaConfigMode");
-    Field wMetaConfigValue = clazz.getDeclaredField("wMetaConfigValue");
-    Field wMetaConfigField = clazz.getDeclaredField("wMetaConfigField");
-    Field wLogDirectory = clazz.getDeclaredField("wLogDirectory");
-    Field wOptions = clazz.getDeclaredField("wOptions");
-
-    assertNotNull(wConfigMode);
-    assertNotNull(wConfigValue);
-    assertNotNull(wConfigField);
-    assertNotNull(wMetaConfigMode);
-    assertNotNull(wMetaConfigValue);
-    assertNotNull(wMetaConfigField);
-    assertNotNull(wLogDirectory);
-    assertNotNull(wOptions);
-  }
 
   @Test
   void shouldCreateDefaultWindowProperty() {

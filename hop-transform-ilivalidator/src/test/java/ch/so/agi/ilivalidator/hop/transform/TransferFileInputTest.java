@@ -17,7 +17,9 @@ import org.apache.hop.i18n.BaseMessages;
 import org.apache.hop.metadata.api.IHopMetadataProvider;
 import org.apache.hop.pipeline.*;
 import org.apache.hop.pipeline.transform.*;
+import org.apache.hop.ui.core.widget.TextVar;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.CTabFolder;
 import org.eclipse.swt.layout.FormLayout;
 import org.eclipse.swt.widgets.*;
 import org.junit.jupiter.api.*;
@@ -271,6 +273,80 @@ class TransferFileInputTest {
               new ValueOrField(SourceMode.FIELD, meta.getStaticFilePath(), "edited_path"), value);
           dialogShell.close();
         });
+  }
+
+  @Test
+  void configInputsPreserveBothSourcesAndOnlyCommitOnOk() throws Exception {
+    IlivalidatorMeta meta = meta();
+    meta.setConfigValue("${ROOT}/validation.ini");
+    meta.setConfigField("previous_config");
+    meta.setMetaConfigMode("FIELD");
+    meta.setMetaConfigValue("ilidata:ch.so.agi.meta");
+    meta.setMetaConfigField("previous_meta");
+    PipelineMeta pipeline = new PipelineMeta();
+    TransformMeta source = new TransformMeta("Source", new FieldsMeta());
+    TransformMeta target = new TransformMeta("Validator", meta);
+    pipeline.addTransform(source);
+    pipeline.addTransform(target);
+    pipeline.addPipelineHop(new PipelineHopMeta(source, target));
+
+    String before = meta.getXml();
+    meta.setChanged(false);
+    visitDialog(meta, pipeline, dialog -> {
+      editConfigInputs(dialog);
+      assertEquals(before, assertDoesNotThrow(meta::getXml));
+      dialog.close();
+    });
+    assertFalse(meta.hasChanged());
+    assertEquals(before, meta.getXml());
+
+    visitDialog(meta, pipeline, dialog -> {
+      editConfigInputs(dialog);
+      all(dialog, Button.class).stream()
+          .filter(b -> BaseMessages.getString(IlivalidatorMeta.class, "System.Button.OK")
+              .equals(b.getText()))
+          .findFirst()
+          .orElseThrow()
+          .notifyListeners(SWT.Selection, new Event());
+    });
+    assertTrue(meta.hasChanged());
+    IlivalidatorMeta copy = new IlivalidatorMeta();
+    copy.loadXml(
+        XmlHandler.loadXmlString("<transform>" + meta.getXml() + "</transform>")
+            .getDocumentElement(),
+        null);
+    assertEquals("FIELD", copy.getConfigMode());
+    assertEquals("${ROOT}/updated.ini", copy.getConfigValue());
+    assertEquals("other", copy.getConfigField());
+    assertEquals("STATIC", copy.getMetaConfigMode());
+    assertEquals("ilidata:ch.so.agi.meta", copy.getMetaConfigValue());
+    assertEquals("previous_meta", copy.getMetaConfigField());
+  }
+
+  private static void editConfigInputs(Shell dialog) {
+    CTabFolder tabs = all(dialog, CTabFolder.class).getFirst();
+    tabs.setSelection(1);
+    List<ValueOrFieldControl> editors =
+        all((Composite) tabs.getSelection().getControl(), ValueOrFieldControl.class);
+    ValueOrFieldControl config = editors.get(0);
+    ValueOrFieldControl metaConfig = editors.get(1);
+    assertEquals(new ValueOrField(SourceMode.CONFIGURED, "${ROOT}/validation.ini", "previous_config"),
+        config.getValue());
+    assertEquals(new ValueOrField(SourceMode.FIELD, "ilidata:ch.so.agi.meta", "previous_meta"),
+        metaConfig.getValue());
+
+    all(config, TextVar.class).getFirst().setText("${ROOT}/updated.ini");
+    Combo configMode = all(config, Combo.class).getFirst();
+    configMode.select(1);
+    configMode.notifyListeners(SWT.Selection, new Event());
+    Combo configField = all(config, Combo.class).get(1);
+    assertArrayEquals(new String[] {"file_path", "other"}, configField.getItems());
+    configField.setText("other");
+
+    Combo metaMode = all(metaConfig, Combo.class).getFirst();
+    metaMode.select(0);
+    metaMode.notifyListeners(SWT.Selection, new Event());
+    assertEquals("ilidata:ch.so.agi.meta", all(metaConfig, TextVar.class).getFirst().getText());
   }
 
   @Test

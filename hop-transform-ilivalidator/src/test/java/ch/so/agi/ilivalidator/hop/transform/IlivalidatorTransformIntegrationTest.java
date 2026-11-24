@@ -2,62 +2,51 @@ package ch.so.agi.ilivalidator.hop.transform;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptions;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorResult;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorService;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Integration tests for Ilivalidator transform with real INTERLIS files.
  */
 class IlivalidatorTransformIntegrationTest {
 
+  private static final Path FIXTURES = Path.of("..", "e2e", "fixtures").toAbsolutePath();
   private final IlivalidatorService service = new IlivalidatorService();
 
   @Test
-  void shouldValidateValidXmlFile() throws Exception {
-    Path validFile = Files.createTempFile("valid-", ".xml");
-    Files.writeString(validFile, "<?xml version=\"1.0\"?><ROOT/>");
+  void shouldValidateValidTransferFile() {
+    IlivalidatorResult result = service.validate(FIXTURES.resolve("valid.xtf"), options().build());
 
-    try {
-      IlivalidatorResult result = service.validate(
-          validFile,
-          IlivalidatorOptions.builder().runIlivalidator(false).build());
-
-      assertTrue(result.isValid());
-    } finally {
-      Files.deleteIfExists(validFile);
-    }
+    assertTrue(result.isValid(), () -> result.getIssues().toString());
   }
 
   @Test
-  void shouldValidateInvalidXmlFile() throws Exception {
-    Path invalidFile = Files.createTempFile("invalid-", ".xml");
+  void shouldReportInvalidXmlFile(@TempDir Path directory) throws IOException {
+    Path invalidFile = directory.resolve("invalid.xml");
     Files.writeString(invalidFile, "<MyRoot><Header></MyRoot>");
 
-    try {
-      IlivalidatorResult result = service.validate(
-          invalidFile,
-          IlivalidatorOptions.builder().runIlivalidator(false).build());
+    IlivalidatorResult result = service.validate(invalidFile, IlivalidatorOptions.defaults());
 
-      assertFalse(result.isValid());
-      assertTrue(result.getIssues().stream()
-          .anyMatch(issue -> "PARSER_ERROR".equals(issue.getCode())));
-    } finally {
-      Files.deleteIfExists(invalidFile);
-    }
+    assertFalse(result.isValid());
+    assertTrue(result.getIssues().stream()
+        .anyMatch(issue -> "PARSER_ERROR".equals(issue.getCode())));
   }
 
   @Test
-  void shouldHandleMissingFile() {
-    IlivalidatorResult result = service.validate(
-        Path.of("/path/that/does/not/exist.xtf"),
-        IlivalidatorOptions.builder().runIlivalidator(false).build());
+  void shouldHandleMissingFile(@TempDir Path directory) {
+    IlivalidatorResult result =
+        service.validate(directory.resolve("missing.xtf"), IlivalidatorOptions.defaults());
 
     assertFalse(result.isValid());
     assertTrue(result.getIssues().stream()
@@ -65,76 +54,45 @@ class IlivalidatorTransformIntegrationTest {
   }
 
   @Test
-  void shouldCreateLogFile() throws Exception {
-    Path testFile = Files.createTempFile("log-test-", ".xtf");
-    Files.writeString(testFile, "<?xml version=\"1.0\"?><ROOT/>");
+  void shouldCreateLogFile(@TempDir Path directory) throws IOException {
+    IlivalidatorResult result = service.validate(
+        FIXTURES.resolve("valid.xtf"), options().logDirectory(directory.toString()).build());
 
-    Path logDir = Files.createTempDirectory("logs-");
-
-    try {
-      IlivalidatorOptions options = IlivalidatorOptions.builder()
-          .logDirectory(logDir.toString())
-          .logFileTimestamp(false)
-          .runIlivalidator(false)
-          .build();
-
-      IlivalidatorResult result = service.validate(testFile, options);
-
-      assertTrue(result.isValid());
-    } finally {
-      Files.deleteIfExists(testFile);
-      if (logDir != null) {
-        try (var stream = Files.walk(logDir)) {
-          stream.sorted((p1, p2) -> p2.compareTo(p1)).forEach(p -> {
-            try {
-              Files.deleteIfExists(p);
-            } catch (Exception ignored) {}
-          });
-        }
-      }
-    }
+    assertTrue(result.isValid());
+    Path log = directory.resolve("valid.xtf.log");
+    assertEquals(log.toString(), result.getLogFilePath());
+    assertFalse(Files.readString(log).isBlank());
   }
 
   @Test
-  void shouldValidateMultipleFilesSequentially() throws Exception {
-    Path file1 = Files.createTempFile("multi1-", ".xtf");
-    Path file2 = Files.createTempFile("multi2-", ".xtf");
-    Files.writeString(file1, "<?xml version=\"1.0\"?><ROOT/>");
-    Files.writeString(file2, "<?xml version=\"1.0\"?><ROOT/>");
+  void shouldValidateMultipleFilesSequentially(@TempDir Path directory) throws IOException {
+    Path valid = FIXTURES.resolve("valid.xtf");
+    Path invalid = directory.resolve("invalid.xtf");
+    Files.writeString(invalid, Files.readString(valid).replace("<Name>Example</Name>", ""));
+    IlivalidatorOptions options = options().build();
 
-    try {
-      IlivalidatorOptions options = IlivalidatorOptions.builder().runIlivalidator(false).build();
-
-      IlivalidatorResult result1 = service.validate(file1, options);
-      IlivalidatorResult result2 = service.validate(file2, options);
-
-      assertTrue(result1.isValid());
-      assertTrue(result2.isValid());
-    } finally {
-      Files.deleteIfExists(file1);
-      Files.deleteIfExists(file2);
-    }
+    assertFalse(service.validate(invalid, options).isValid());
+    assertTrue(service.validate(valid, options).isValid());
   }
 
   @Test
-  void shouldHandleLargeXmlFile() throws Exception {
-    Path largeFile = Files.createTempFile("large-", ".xml");
-    StringBuilder content = new StringBuilder("<?xml version=\"1.0\"?><ROOT>");
-    for (int i = 0; i < 1000; i++) {
-      content.append("<Element").append(i).append(">Data</Element").append(i).append(">");
-    }
-    content.append("</ROOT>");
-    Files.writeString(largeFile, content.toString());
+  void shouldHandleLargeTransfer(@TempDir Path directory) throws IOException {
+    Path largeFile = directory.resolve("large.xtf");
+    String items = IntStream.range(0, 1000)
+        .mapToObj(i -> "<TransferInputTest.Data.Item TID=\"i" + i
+            + "\"><Name>Example</Name></TransferInputTest.Data.Item>")
+        .collect(Collectors.joining("\n"));
+    Files.writeString(largeFile, Files.readString(FIXTURES.resolve("valid.xtf"))
+        .replace("<TransferInputTest.Data.Item TID=\"i1\"><Name>Example</Name></TransferInputTest.Data.Item>",
+            items));
 
-    try {
-      IlivalidatorResult result = service.validate(
-          largeFile,
-          IlivalidatorOptions.builder().runIlivalidator(false).build());
+    IlivalidatorResult result = service.validate(largeFile, options().build());
 
-      assertTrue(result.isValid());
-    } finally {
-      Files.deleteIfExists(largeFile);
-    }
+    assertTrue(result.isValid(), () -> result.getIssues().toString());
+  }
+
+  private IlivalidatorOptions.Builder options() {
+    return IlivalidatorOptions.builder().repositoryUrls(List.of(FIXTURES.toString()));
   }
 
   @Test

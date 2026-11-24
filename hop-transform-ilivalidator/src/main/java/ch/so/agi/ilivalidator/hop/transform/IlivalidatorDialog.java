@@ -1,5 +1,9 @@
 package ch.so.agi.ilivalidator.hop.transform;
 
+import ch.so.agi.hop.commons.core.SourceMode;
+import ch.so.agi.hop.commons.core.ValueOrField;
+import ch.so.agi.hop.commons.ui.EditorKind;
+import ch.so.agi.hop.commons.ui.ValueOrFieldControl;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptionCatalog;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptionCodec;
 import ch.so.agi.ilivalidator.core.validator.IlivalidatorOptionDefinition;
@@ -16,7 +20,6 @@ import org.apache.hop.ui.core.PropsUi;
 import org.apache.hop.ui.core.dialog.BaseDialog;
 import org.apache.hop.ui.core.gui.WindowProperty;
 import org.apache.hop.ui.core.widget.ColumnInfo;
-import org.apache.hop.ui.core.widget.ComboVar;
 import org.apache.hop.ui.core.widget.TableView;
 import org.apache.hop.ui.core.widget.TextVar;
 import org.apache.hop.ui.pipeline.transform.BaseTransformDialog;
@@ -32,7 +35,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
@@ -54,14 +56,8 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
   private TextVar wModelNames;
   private TextVar wRepositoryUrls;
-  private ComboVar wConfigMode;
-  private TextVar wConfigValue;
-  private Button wbConfigValue;
-  private ComboVar wConfigField;
-  private ComboVar wMetaConfigMode;
-  private TextVar wMetaConfigValue;
-  private Button wbMetaConfigValue;
-  private ComboVar wMetaConfigField;
+  private ValueOrFieldControl wConfig;
+  private ValueOrFieldControl wMetaConfig;
   private Button wAllObjectsAccessible;
 
   private Button wFailPipelineOnInvalid;
@@ -152,7 +148,6 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     wCancel.addListener(SWT.Selection, e -> cancel());
 
     getData();
-    enableDisableControls();
     input.setChanged(changed);
 
     openWithFixedShellSize(DIALOG_WIDTH, DIALOG_HEIGHT);
@@ -211,79 +206,20 @@ public class IlivalidatorDialog extends BaseTransformDialog {
         lastControl);
     lastControl = wRepositoryUrls;
 
-    wConfigMode = new ComboVar(variables, validationComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    wConfigMode.add("STATIC");
-    wConfigMode.add("FIELD");
-    wConfigMode.addModifyListener(
-        e -> {
-          input.setChanged();
-          enableDisableControls();
-        });
+    wConfig = createConfigFileInput(validationComposite);
     placeControl(
-        validationComposite,
-        BaseMessages.getString(PKG, "IlivalidatorDialog.ConfigMode.Label"),
-        wConfigMode,
-        lastControl);
-    lastControl = wConfigMode;
-
-    wConfigValue = new TextVar(variables, validationComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    wConfigValue.addModifyListener(e -> input.setChanged());
-    wbConfigValue = new Button(validationComposite, SWT.PUSH | SWT.CENTER);
-    placeControlWithBrowse(
         validationComposite,
         BaseMessages.getString(PKG, "IlivalidatorDialog.ConfigValue.Label"),
-        wConfigValue,
-        lastControl,
-        wbConfigValue,
-        e -> browseFile(wConfigValue));
-    lastControl = wConfigValue;
-
-    wConfigField = new ComboVar(variables, validationComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    wConfigField.addModifyListener(e -> input.setChanged());
-    placeControl(
-        validationComposite,
-        BaseMessages.getString(PKG, "IlivalidatorDialog.ConfigField.Label"),
-        wConfigField,
+        wConfig,
         lastControl);
-    loadOptionalFieldSuggestions(wConfigField);
-    lastControl = wConfigField;
 
-    wMetaConfigMode = new ComboVar(variables, validationComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    wMetaConfigMode.add("STATIC");
-    wMetaConfigMode.add("FIELD");
-    wMetaConfigMode.addModifyListener(
-        e -> {
-          input.setChanged();
-          enableDisableControls();
-        });
+    wMetaConfig = createConfigFileInput(validationComposite);
     placeControl(
-        validationComposite,
-        BaseMessages.getString(PKG, "IlivalidatorDialog.MetaConfigMode.Label"),
-        wMetaConfigMode,
-        lastControl);
-    lastControl = wMetaConfigMode;
-
-    wMetaConfigValue = new TextVar(variables, validationComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    wMetaConfigValue.addModifyListener(e -> input.setChanged());
-    wbMetaConfigValue = new Button(validationComposite, SWT.PUSH | SWT.CENTER);
-    placeControlWithBrowse(
         validationComposite,
         BaseMessages.getString(PKG, "IlivalidatorDialog.MetaConfigValue.Label"),
-        wMetaConfigValue,
-        lastControl,
-        wbMetaConfigValue,
-        e -> browseFile(wMetaConfigValue));
-    lastControl = wMetaConfigValue;
-
-    wMetaConfigField = new ComboVar(variables, validationComposite, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
-    wMetaConfigField.addModifyListener(e -> input.setChanged());
-    placeControl(
-        validationComposite,
-        BaseMessages.getString(PKG, "IlivalidatorDialog.MetaConfigField.Label"),
-        wMetaConfigField,
-        lastControl);
-    loadOptionalFieldSuggestions(wMetaConfigField);
-    lastControl = wMetaConfigField;
+        wMetaConfig,
+        wConfig);
+    lastControl = wMetaConfig;
 
     wAllObjectsAccessible = new Button(validationComposite, SWT.CHECK);
     placeControl(
@@ -305,6 +241,18 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     validationTab.setControl(validationComposite);
   }
 
+  private ValueOrFieldControl createConfigFileInput(Composite parent) {
+    return ValueOrFieldControl.builder(parent, variables)
+        .editor(EditorKind.FILE_OPEN)
+        .fieldProvider(() -> {
+          var fields = pipelineMeta.getPrevTransformFields(variables, transformMeta);
+          return fields == null ? new String[0] : fields.getFieldNames();
+        })
+        .browseStrategy(new LocalTransferFileBrowser())
+        .onChange(() -> input.setChanged())
+        .build();
+  }
+
   private void createOptionsTab(CTabFolder tabFolder) {
     CTabItem optionsTab = new CTabItem(tabFolder, SWT.NONE);
     optionsTab.setText(BaseMessages.getString(PKG, "IlivalidatorDialog.Tab.Options"));
@@ -316,7 +264,7 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     layout.marginHeight = PropsUi.getFormMargin();
     optionsComposite.setLayout(layout);
 
-    ColumnInfo[] columns = new ColumnInfo[5];
+    ColumnInfo[] columns = new ColumnInfo[4];
     columns[0] =
         new ColumnInfo(
             BaseMessages.getString(PKG, "IlivalidatorDialog.Options.Column.Key"),
@@ -339,12 +287,6 @@ public class IlivalidatorDialog extends BaseTransformDialog {
             BaseMessages.getString(PKG, "IlivalidatorDialog.Options.Column.Type"),
             ColumnInfo.COLUMN_TYPE_TEXT);
     columns[3].setReadOnly(true);
-
-    columns[4] =
-        new ColumnInfo(
-            BaseMessages.getString(PKG, "IlivalidatorDialog.Options.Column.Applicable"),
-            ColumnInfo.COLUMN_TYPE_TEXT);
-    columns[4].setReadOnly(true);
 
     wOptions =
         new TableView(
@@ -485,19 +427,6 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     control.setLayoutData(fdControl);
   }
 
-  private void browseFile(TextVar textVar) {
-    FileDialog dialog = new FileDialog(shell, SWT.OPEN);
-    String currentPath = textVar.getText();
-    if (currentPath != null && !currentPath.isEmpty()) {
-      dialog.setFileName(currentPath);
-    }
-    String path = dialog.open();
-    if (path != null) {
-      textVar.setText(path);
-      input.setChanged();
-    }
-  }
-
   private void browseDirectory(TextVar textVar) {
     DirectoryDialog dialog = new DirectoryDialog(shell, SWT.OPEN);
     String currentPath = textVar.getText();
@@ -511,30 +440,6 @@ public class IlivalidatorDialog extends BaseTransformDialog {
     }
   }
 
-  private void loadOptionalFieldSuggestions(ComboVar combo) {
-    // Optional suggestions must not prevent the transfer input's status from being shown.
-    String text = combo.getText();
-    try {
-      var fields = pipelineMeta.getPrevTransformFields(variables, transformMeta);
-      combo.setItems(fields == null ? new String[0] : fields.getFieldNames());
-      combo.setText(text);
-    } catch (Exception e) {
-      log.logDebug("Unable to load optional configuration field suggestions", e);
-    }
-  }
-
-  private void enableDisableControls() {
-    boolean configFromField = "FIELD".equalsIgnoreCase(wConfigMode.getText());
-    wConfigValue.setEnabled(!configFromField);
-    wbConfigValue.setEnabled(!configFromField);
-    wConfigField.setEnabled(configFromField);
-
-    boolean metaConfigFromField = "FIELD".equalsIgnoreCase(wMetaConfigMode.getText());
-    wMetaConfigValue.setEnabled(!metaConfigFromField);
-    wbMetaConfigValue.setEnabled(!metaConfigFromField);
-    wMetaConfigField.setEnabled(metaConfigFromField);
-  }
-
   private void getData() {
     wTransformName.setText(transformName == null ? "" : transformName);
 
@@ -542,12 +447,12 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
     wModelNames.setText(input.getModelNames() == null ? "" : input.getModelNames());
     wRepositoryUrls.setText(input.getRepositoryUrls() == null ? "" : input.getRepositoryUrls());
-    wConfigMode.setText(input.getConfigMode() == null ? "STATIC" : input.getConfigMode());
-    wConfigValue.setText(input.getConfigValue() == null ? "" : input.getConfigValue());
-    wConfigField.setText(input.getConfigField() == null ? "" : input.getConfigField());
-    wMetaConfigMode.setText(input.getMetaConfigMode() == null ? "STATIC" : input.getMetaConfigMode());
-    wMetaConfigValue.setText(input.getMetaConfigValue() == null ? "" : input.getMetaConfigValue());
-    wMetaConfigField.setText(input.getMetaConfigField() == null ? "" : input.getMetaConfigField());
+    wConfig.setValue(new ValueOrField(
+        "FIELD".equalsIgnoreCase(input.getConfigMode()) ? SourceMode.FIELD : SourceMode.CONFIGURED,
+        input.getConfigValue(), input.getConfigField()));
+    wMetaConfig.setValue(new ValueOrField(
+        "FIELD".equalsIgnoreCase(input.getMetaConfigMode()) ? SourceMode.FIELD : SourceMode.CONFIGURED,
+        input.getMetaConfigValue(), input.getMetaConfigField()));
     wAllObjectsAccessible.setSelection(input.isAllObjectsAccessible());
     wFailPipelineOnInvalid.setSelection(input.isFailPipelineOnInvalid());
 
@@ -582,22 +487,10 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
     for (IlivalidatorOptionDefinition definition : IlivalidatorOptionCatalog.allDefinitions()) {
       IlivalidatorOptionEntry existingEntry = existing.get(definition.getKey().toLowerCase(Locale.ROOT));
-      boolean applies = definition.appliesToCurrentContext();
-      boolean enabled = existingEntry != null && existingEntry.isEnabled() && applies;
+      boolean enabled = existingEntry != null && existingEntry.isEnabled();
       String value = existingEntry == null || existingEntry.getValue() == null ? "" : existingEntry.getValue();
 
-      TableItem item =
-          wOptions.add(
-              definition.getKey(),
-              enabled ? "Y" : "N",
-              value,
-              definition.getType().name(),
-              applies
-                  ? BaseMessages.getString(PKG, "IlivalidatorDialog.Options.Applicable.Yes")
-                  : BaseMessages.getString(PKG, "IlivalidatorDialog.Options.Applicable.No"));
-      if (!applies) {
-        item.setForeground(shell.getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY));
-      }
+      wOptions.add(definition.getKey(), enabled ? "Y" : "N", value, definition.getType().name());
     }
 
     wOptions.removeEmptyRows();
@@ -722,12 +615,14 @@ public class IlivalidatorDialog extends BaseTransformDialog {
 
     input.setModelNames(wModelNames.getText());
     input.setRepositoryUrls(wRepositoryUrls.getText());
-    input.setConfigMode(wConfigMode.getText());
-    input.setConfigValue(wConfigValue.getText());
-    input.setConfigField(wConfigField.getText());
-    input.setMetaConfigMode(wMetaConfigMode.getText());
-    input.setMetaConfigValue(wMetaConfigValue.getText());
-    input.setMetaConfigField(wMetaConfigField.getText());
+    ValueOrField config = wConfig.getValue();
+    input.setConfigMode(config.mode() == SourceMode.FIELD ? "FIELD" : "STATIC");
+    input.setConfigValue(config.configuredValue());
+    input.setConfigField(config.fieldName());
+    ValueOrField metaConfig = wMetaConfig.getValue();
+    input.setMetaConfigMode(metaConfig.mode() == SourceMode.FIELD ? "FIELD" : "STATIC");
+    input.setMetaConfigValue(metaConfig.configuredValue());
+    input.setMetaConfigField(metaConfig.fieldName());
     input.setSerializedOptions(IlivalidatorOptionCodec.encode(readOptionsFromTable()));
     input.setAllObjectsAccessible(wAllObjectsAccessible.getSelection());
 

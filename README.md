@@ -210,7 +210,7 @@ disabled, and throws a `HopTransformException` without emitting a row when it is
      - `is_valid`
      - `validation_message`
 
-## Transfer file: configured value or incoming field
+## Transfer and configuration files
 
 The transform's Input tab uses `ValueOrFieldControl` from Hop Plugin Commons.
 Choose **Value / Variable** for a local file path (including `${VARIABLE}` expressions),
@@ -228,7 +228,10 @@ is unchanged, including the existing variable resolution of incoming paths.
 
 Browse uses the native local-file picker because the validator accepts local paths.
 Variables are resolved only to preselect a location; cancelling preserves the original
-expression. Configuration, metaconfiguration, and log-directory controls are unchanged.
+expression. The **Validation** tab offers the same two modes for **Validation config** and
+**Meta-config**. The two paths and field names are stored in the existing `configMode`,
+`configValue`, `configField`, `metaConfigMode`, `metaConfigValue` and `metaConfigField`
+properties. The **Options** tab lists the key, active state, value and type.
 
 The transform depends on `ch.so.agi:hop-plugin-commons-ui:0.1.0-SNAPSHOT` from
 `https://jars.interlis.guru/snapshots/`. Its ZIP includes UI and Core as separate JARs
@@ -271,9 +274,10 @@ OK/cancellation actions, upstream metadata, legacy metadata roundtrips, browse r
 and label/status geometry. The Commons repository retains its separate OS test matrix.
 
 The E2E script downloads and checksums Hop 2.19 in `~/.cache/hop-ilivalidator`, installs
-the ZIPs into `target/e2e/hop`, and runs three pipelines: two incoming file paths, one
-configured path without input, and an invalid field name. Its INTERLIS model and data
-are local fixtures. Logs, CSV output, and results stay under `target/e2e/`.
+the ZIPs into `target/e2e/hop`, and runs four pipeline cases covering incoming paths,
+a configured path without input, invalid data and a missing field. It also runs the
+workflow action with a valid and an invalid transfer. All cases use a local INTERLIS model
+and local fixtures. Logs, CSV output, and results stay under `target/e2e/`.
 `target/package-verification.json` records archive checksums and the resolved base
 Commons snapshots. Package verification compares the embedded Commons bytes with
 the Maven-local artifacts selected by the current build; it does not manually select
